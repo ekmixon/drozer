@@ -6,8 +6,8 @@ def indent(text, prefix):
     """
     Add prefix to the beginning of all lines in text.
     """
-    
-    return "\n".join(map(lambda l: "%s%s" % (prefix, l), text.split("\n")))
+
+    return "\n".join(map(lambda l: f"{prefix}{l}", text.split("\n")))
     
 def wrap(text, width=80):
     """

@@ -249,11 +249,7 @@ class DeviceCollection(set):
         Device.
         """
 
-        for device in Devices:
-            if device == target:
-                return device
-
-        return None
+        return next((device for device in Devices if device == target), None)
 
 class DeviceGoneAway(Exception):
     """
@@ -266,6 +262,6 @@ class DeviceGoneAway(Exception):
         self.device_id = device_id
 
     def __str__(self):
-        return "No connection to {}.".format(self.device_id)
+        return f"No connection to {self.device_id}."
 
 Devices = DeviceCollection()

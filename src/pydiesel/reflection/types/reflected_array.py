@@ -19,10 +19,11 @@ class ReflectedArray(ReflectedType):
         protocol that contains an Array.
         """
 
-        array = []
+        array = [
+            ReflectedType.fromArgument(element, reflector)
+            for element in argument.array.element
+        ]
 
-        for element in argument.array.element:
-            array.append(ReflectedType.fromArgument(element, reflector))
 
         return ReflectedArray(array, reflector=reflector)
 
@@ -108,9 +109,8 @@ class ReflectedArray(ReflectedType):
         for obj in objects:
             if not list_type:
                 list_type = type(obj)
-            else:
-                if type(obj) != list_type:
-                    raise TypeError("mismatched array element types")
+            elif type(obj) != list_type:
+                raise TypeError("mismatched array element types")
 
             yield ReflectedType.fromNative(obj, self._reflector)
 
@@ -160,5 +160,5 @@ class ReflectedArray(ReflectedType):
         self._native[i:j] = seq
 
     def __str__(self):
-        return "[{}]".format(", ".join(map(lambda e: str(e), self._native)))
+        return f'[{", ".join(map(lambda e: str(e), self._native))}]'
         

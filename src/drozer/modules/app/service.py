@@ -40,7 +40,7 @@ List exported services with no permissions required to interact with it:
         parser.add_argument("-v", action="store_true", dest="verbose", default=False)
 
     def execute(self, arguments):
-        if arguments.package == None:
+        if arguments.package is None:
             for package in self.packageManager().getPackages(common.PackageManager.GET_SERVICES | common.PackageManager.GET_PERMISSIONS):
                 self.__get_services(arguments, package)
         else:
@@ -135,38 +135,35 @@ NB: by default, this module will wait 20 seconds for a reply."""
     def execute(self, arguments):
         if arguments.msg is None:
             self.stderr.write("please specify --msg as \"what arg1 arg2\"\n")
-            
+
             return
-        
+
         binder = self.getBinding(arguments.package, arguments.component)
-    
+
         if arguments.extra is not None:
             for extra in arguments.extra:
                 binder.add_extra(extra)
 
             if arguments.bundle_as_obj:
                 binder.setObjFormat("bundleAsObj")
-                
+
         if arguments.no_response:
             binder.send_message(arguments.msg, -1)
-            
+
             self.stdout.write("Sent message, did not wait for a reply from %s/%s.\n" % (arguments.package, arguments.component))
+        elif result := binder.send_message(arguments.msg, arguments.timeout):
+            response_message = binder.getMessage();
+            response_bundle = binder.getData();
+
+            self.stdout.write("Got a reply from %s/%s:\n" % (arguments.package, arguments.component))
+            self.stdout.write("  what: %d\n" % int(response_message.what))
+            self.stdout.write("  arg1: %d\n" % int(response_message.arg1))
+            self.stdout.write("  arg2: %d\n" % int(response_message.arg2))
+
+            for n in response_bundle.split('\n'):
+                self.stdout.write("  %s\n"%n)
         else:
-            result = binder.send_message(arguments.msg, arguments.timeout)
-            
-            if result:
-                response_message = binder.getMessage();
-                response_bundle = binder.getData();
-
-                self.stdout.write("Got a reply from %s/%s:\n" % (arguments.package, arguments.component))
-                self.stdout.write("  what: %d\n" % int(response_message.what))
-                self.stdout.write("  arg1: %d\n" % int(response_message.arg1))
-                self.stdout.write("  arg2: %d\n" % int(response_message.arg2))
-
-                for n in response_bundle.split('\n'):
-                    self.stdout.write("  %s\n"%n)
-            else:
-                self.stdout.write("Did not receive a reply from %s/%s.\n" % (arguments.package, arguments.component))
+            self.stdout.write("Did not receive a reply from %s/%s.\n" % (arguments.package, arguments.component))
 
 
 class Start(Module):

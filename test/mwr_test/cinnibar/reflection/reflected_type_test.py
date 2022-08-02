@@ -34,7 +34,7 @@ class ReflectedTypeTestCase(unittest.TestCase):
         argument = Message.Argument(type=Message.Argument.ARRAY)
         argument.array.type = Message.Array.PRIMITIVE
 
-        for i in range(0,3):
+        for _ in range(3):
             element = argument.array.element.add(type=Message.Argument.PRIMITIVE)
             element.primitive.type = Message.Primitive.BOOL
             element.primitive.bool = True
@@ -44,7 +44,7 @@ class ReflectedTypeTestCase(unittest.TestCase):
         assert isinstance(type, reflection.types.ReflectedArray)
         assert len(type.native()) == 3
 
-        for i in range(0,3):
+        for i in range(3):
             assert isinstance(type.native()[i], reflection.types.ReflectedPrimitive)
             assert type.native()[i].type() == "boolean"
 
@@ -52,27 +52,27 @@ class ReflectedTypeTestCase(unittest.TestCase):
         argument = Message.Argument(type=Message.Argument.ARRAY)
         argument.array.type = Message.Array.STRING
 
-        for i in range(0,3):
+        for i in range(3):
             element = argument.array.element.add(type=Message.Argument.STRING)
-            element.string = "Hello, World! (" + str(i) + ")"
+            element.string = f"Hello, World! ({str(i)})"
 
         type = reflection.types.ReflectedType.fromArgument(argument, reflector=self.reflector)
 
         assert isinstance(type, reflection.types.ReflectedArray)
         assert len(type.native()) == 3
 
-        for i in range(0,3):
+        for i in range(3):
             assert isinstance(type.native()[i], reflection.types.ReflectedString)
-            assert type.native()[i].native() == "Hello, World! (" + str(i) + ")"
+            assert type.native()[i].native() == f"Hello, World! ({str(i)})"
 
     def testItShouldBuildNestedArrayFromArgument(self):
         argument = Message.Argument(type=Message.Argument.ARRAY)
         argument.array.type = Message.Array.ARRAY
 
-        for i in range(0,3):
+        for i in range(3):
             element = argument.array.element.add(type=Message.Argument.ARRAY)
 
-            for j in range(0,i):
+            for _ in range(i):
                 subelement = element.array.element.add(type=Message.Argument.PRIMITIVE)
                 subelement.primitive.type = Message.Primitive.BOOL
                 subelement.primitive.bool = True
@@ -82,15 +82,15 @@ class ReflectedTypeTestCase(unittest.TestCase):
         assert isinstance(type, reflection.types.ReflectedArray)
         assert len(type.native()) == 3
 
-        for i in range(0,3):
+        for i in range(3):
             assert isinstance(type.native()[i], reflection.types.ReflectedArray)
             assert len(type.native()[i].native()) == i
 
     def testItShouldBuildObjectArrayFromArgument(self):
         argument = Message.Argument(type=Message.Argument.ARRAY)
         argument.array.type = Message.Array.OBJECT
-        
-        for i in range(0,3):
+
+        for i in range(3):
             element = argument.array.element.add(type=Message.Argument.OBJECT)
             element.object.reference = i
 
@@ -99,7 +99,7 @@ class ReflectedTypeTestCase(unittest.TestCase):
         assert isinstance(type, reflection.types.ReflectedArray)
         assert len(type.native()) == 3
 
-        for i in range(0,3):
+        for i in range(3):
             assert isinstance(type.native()[i], reflection.types.ReflectedObject)
             assert type.native()[i]._ref == i
 
@@ -107,11 +107,11 @@ class ReflectedTypeTestCase(unittest.TestCase):
         argument = Message.Argument(type=Message.Argument.ARRAY)
         argument.array.type = Message.Array.PRIMITIVE
 
-        for i in range(0,3):
+        for _ in range(3):
             element = argument.array.element.add(type=Message.Argument.PRIMITIVE)
             element.primitive.type = Message.Primitive.BOOL
             element.primitive.bool = True
-        for i in range(0,3):
+        for i in range(3):
             element = argument.array.element.add(type=Message.Argument.OBJECT)
             element.object.reference = i
 
@@ -178,7 +178,7 @@ class ReflectedTypeTestCase(unittest.TestCase):
         type = reflection.types.ReflectedType.fromNative([1, 2, 3], reflector=self.reflector)
 
         assert isinstance(type, reflection.types.ReflectedArray)
-        for i in range(0,3):
+        for i in range(3):
             assert isinstance(type.native()[i], reflection.types.ReflectedPrimitive)
             assert type.native()[i].type() == "int"
             assert type.native()[i].native() == i+1
@@ -188,7 +188,7 @@ class ReflectedTypeTestCase(unittest.TestCase):
         type = reflection.types.ReflectedType.fromNative(trial, reflector=self.reflector)
 
         assert isinstance(type, reflection.types.ReflectedArray)
-        for i in range(0,3):
+        for i in range(3):
             assert isinstance(type.native()[i], reflection.types.ReflectedString)
             assert type.native()[i].native() == trial[i]
 
@@ -196,7 +196,7 @@ class ReflectedTypeTestCase(unittest.TestCase):
         type = reflection.types.ReflectedType.fromNative([[], [1], [1,2]], reflector=self.reflector)
 
         assert isinstance(type, reflection.types.ReflectedArray)
-        for i in range(0,3):
+        for i in range(3):
             assert isinstance(type.native()[i], reflection.types.ReflectedArray)
             assert len(type.native()[i].native()) == i
 

@@ -46,7 +46,9 @@ class ReflectedString(ReflectedType):
         at that position.
         """
 
-        return self._native.endswith(suffix, start, end == None and len(self._native) or end)
+        return self._native.endswith(
+            suffix, start, end is None and len(self._native) or end
+        )
 
     def expandtabs(self, tabsize=8):
         """

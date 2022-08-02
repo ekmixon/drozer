@@ -14,7 +14,7 @@ class SuperUser(file_system.FileSystem):
         Get the path to which su is uploaded on the Agent.
         """
 
-        return "%s/su" % (self.workingDir())
+        return f"{self.workingDir()}/su"
 
     def _localPathMinimalSu(self):
         """
@@ -28,7 +28,7 @@ class SuperUser(file_system.FileSystem):
         Get the path to which the install script is uploaded on the Agent.
         """
 
-        return "%s/install-minimal-su.sh" % (self.workingDir())
+        return f"{self.workingDir()}/install-minimal-su.sh"
 
     def isAnySuInstalled(self):
         """
@@ -58,14 +58,11 @@ class SuperUser(file_system.FileSystem):
         """
 
         # Remove existing uploads of su
-        self.shellExec("rm %s/su" % (self.workingDir()))
+        self.shellExec(f"rm {self.workingDir()}/su")
 
         bytes_copied = self.uploadFile(self._localPathMinimalSu(), self.suPath())
 
-        if bytes_copied == os.path.getsize(self._localPathMinimalSu()):
-            return True
-        else:
-            return False
+        return bytes_copied == os.path.getsize(self._localPathMinimalSu())
 
     def uploadMinimalSuInstallScript(self):
         """
@@ -73,7 +70,7 @@ class SuperUser(file_system.FileSystem):
         """
 
         # Remove existing uploads of su install script
-        self.shellExec("rm %s/install-minimal-su.sh" % (self.workingDir()))
+        self.shellExec(f"rm {self.workingDir()}/install-minimal-su.sh")
 
         minimal_su_script = """#!/system/bin/sh
 
@@ -91,9 +88,8 @@ echo 'Done. You can now use `su` from a drozer shell.'
 
         bytes_copied = self.uploadFile(localPathScript, self.__agentPathScript())
 
-        if bytes_copied == os.path.getsize(localPathScript):
-            self.shellExec("chmod 770 " + self.__agentPathScript())
-            return True
-        else:
+        if bytes_copied != os.path.getsize(localPathScript):
             return False
+        self.shellExec(f"chmod 770 {self.__agentPathScript()}")
+        return True
 

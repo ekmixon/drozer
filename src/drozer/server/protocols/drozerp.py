@@ -72,11 +72,11 @@ class Drozer(FrameReceiver):
         elif message.type == Message.SYSTEM_RESPONSE:
             response = self.response_handler.handle(message)
         else:
-            self.__logger.error("got unexpected message type " + message.type)
-        
+            self.__logger.error(f"got unexpected message type {message.type}")
+
         if response is not None:
             self.write(response)
-        
+
         if self.device is not None:
             self.device.last_message_at = time()
     

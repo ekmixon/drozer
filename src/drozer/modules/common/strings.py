@@ -10,11 +10,8 @@ class Strings(object):
         """
 
         StringsKlass = self.klass("com.mwr.jdiesel.util.Strings")
-        
+
         strings = StringsKlass.get(path)
 
-        if strings == None:
-            return []
-        else:
-            return strings.split("\n")
+        return [] if strings is None else strings.split("\n")
             

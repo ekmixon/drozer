@@ -17,7 +17,6 @@ class ReflectedIntegerPrimitiveTestCase(unittest.TestCase):
         self.rp1 = reflection.types.ReflectedPrimitive('int', 1)
         self.rp2 = reflection.types.ReflectedPrimitive('int', 2)
         self.rp3 = reflection.types.ReflectedPrimitive('int', 3)
-        pass
 
     #'__abs__', '__add__',  '__delattr__', 
 
@@ -45,13 +44,13 @@ class ReflectedIntegerPrimitiveTestCase(unittest.TestCase):
         assert self.rp2 == reflection.types.ReflectedPrimitive('int', 2)
 
     def testItShouldShowTwoReflectedPrimitivesAreNotEqual(self):
-        assert not self.rp2 == self.rp1
+        assert self.rp2 != self.rp1
 
     def testItShouldShowAReflectedPrimitiveEqualsANative(self):
         assert self.rp2 == self.np2
 
     def testItShouldNotShowAReflectedPrimitiveEqualsANative(self):
-        assert not self.rp2 == self.np1
+        assert self.rp2 != self.np1
 
     def testItShouldForceAReflectedPrimitiveToAFloat(self):
         assert type(float(self.rp2)) == type(3.14)
@@ -140,13 +139,13 @@ class ReflectedIntegerPrimitiveTestCase(unittest.TestCase):
         assert self.rp2 != self.rp3
 
     def testItShouldNotShowAReflectedPrimitiveIsNotEqualToAnother(self):
-        assert not self.rp2 != self.rp2
+        assert self.rp2 == self.rp2
 
     def testItShouldShowAReflectedPrimitiveIsNotEqualToANative(self):
         assert self.rp2 != self.np3
 
     def testItShouldNotShowAReflectedPrimitiveIsNotEqualToANative(self):
-        assert not self.rp2 != self.np2
+        assert self.rp2 == self.np2
 
     def testItShouldNegateAReflectedPrimitive(self):
         assert -self.rp2 == -2

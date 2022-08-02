@@ -69,7 +69,7 @@ class FrameTestCase(unittest.TestCase):
         # the length is 0x0000000b (dec 11), but we only provide 3 bytes of
         # actual payload
 
-        assert frame.Frame.readFrom(stream) == None     # we haven't read a frame
+        assert frame.Frame.readFrom(stream) is None
         assert stream.tell() == 0                       # we have left the stream intact
 
     def testItShouldReadFrameFromASocket(self):

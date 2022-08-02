@@ -21,10 +21,9 @@ class MockFileInputStream():
     def read():
         if self.pos >= len(self.data):
             return -1
-        else:
-            returnVal = self.data[self.pos]
-            self.pos += 1
-            return returnVal
+        returnVal = self.data[self.pos]
+        self.pos += 1
+        return returnVal
 
 class MockFile():
 

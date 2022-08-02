@@ -57,11 +57,15 @@ class ReflectedType(object):
         it cannot be inferred from the Python type.
         """
 
-        if obj_type == None and isinstance(obj, ReflectedType) or obj_type == "object":
+        if (
+            obj_type is None
+            and isinstance(obj, ReflectedType)
+            or obj_type == "object"
+        ):
             return obj
-        elif obj_type == None and isinstance(obj, long) or obj_type == "long":
+        elif obj_type is None and isinstance(obj, long) or obj_type == "long":
             return cls.reflected_primitive("long", obj, reflector=reflector)
-        elif obj_type == None and isinstance(obj, int) or obj_type == "int":
+        elif obj_type is None and isinstance(obj, int) or obj_type == "int":
             return cls.reflected_primitive("int", obj, reflector=reflector)
         elif obj_type == "byte" and isinstance(obj, int):
             return cls.reflected_primitive("byte", obj, reflector=reflector)
@@ -69,13 +73,17 @@ class ReflectedType(object):
             return cls.reflected_primitive("char", obj, reflector=reflector)
         elif obj_type == "short":
             return cls.reflected_primitive("short", obj, reflector=reflector)
-        elif obj_type == None and isinstance(obj, float) or obj_type == "float":
+        elif obj_type is None and isinstance(obj, float) or obj_type == "float":
             return cls.reflected_primitive("float", obj, reflector=reflector)
-        elif obj_type == None and isinstance(obj, bool) or obj_type == "boolean":
+        elif obj_type is None and isinstance(obj, bool) or obj_type == "boolean":
             return cls.reflected_primitive("boolean", obj, reflector=reflector)
         elif obj_type == "data":
             return cls.reflected_binary(obj, reflector=reflector)
-        elif obj_type == None and (isinstance(obj, str) or isinstance(obj, unicode)) or obj_type == "string":
+        elif (
+            obj_type is None
+            and isinstance(obj, (str, unicode))
+            or obj_type == "string"
+        ):
             return cls.reflected_string(obj, reflector=reflector)
         elif obj_type == "double":
             return cls.reflected_primitive("double", obj, reflector=reflector)
@@ -99,7 +107,7 @@ class ReflectedType(object):
             return 'string'
         elif isinstance(obj, ReflectedObject):
             return 'object'
-        elif obj == None:
+        elif obj is None:
             return 'null'
         else:
             return 'unknown'

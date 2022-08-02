@@ -51,10 +51,8 @@ class ModuleLoader(object):
                         reload(sys.modules[modules[i]])
                 except ImportError:
                     sys.stderr.write("Skipping source file at %s. Unable to load Python module.\n" % modules[i])
-                    pass 
                 except IndentationError:
                     sys.stderr.write("Skipping source file at %s. Indentation Error.\n" % modules[i])
-                    pass
 
     def __load(self, base):
         """
@@ -67,10 +65,13 @@ class ModuleLoader(object):
 
         for klass in self.__subclasses_of(base):
             if klass != base:
-                if not klass.fqmn() in self.__modules: 
-                    self.__modules[klass.fqmn()] = klass
-                else:
-                    self.__modules[klass.fqmn()] = self.__conflict_resolver().resolve(self.__modules[klass.fqmn()], klass)
+                self.__modules[klass.fqmn()] = (
+                    self.__conflict_resolver().resolve(
+                        self.__modules[klass.fqmn()], klass
+                    )
+                    if klass.fqmn() in self.__modules
+                    else klass
+                )
 
     def __locate(self):
         """
@@ -79,7 +80,7 @@ class ModuleLoader(object):
         """
 
         modules = {}
-        
+
         for path in self.__paths():
             for dirpath, _dirnames, filenames in os.walk(path):
                 for filename in filenames:
@@ -93,7 +94,7 @@ class ModuleLoader(object):
                         module = filepath[len(path)+1:filepath.rindex(".")].replace(os.path.sep, ".")
 
                         if os.path.abspath(self.__module_paths) in path:
-                            modules[namespace] = "drozer.modules." + module
+                            modules[namespace] = f"drozer.modules.{module}"
                         else:
                             modules[namespace] = module
 
@@ -105,7 +106,7 @@ class ModuleLoader(object):
         those specified in the DROZER_MODULE_PATH environment variable.
         """
 
-        return self.__module_paths + ":" + Repository.drozer_modules_path()
+        return f"{self.__module_paths}:{Repository.drozer_modules_path()}"
         
     def __paths(self):
         """
@@ -135,9 +136,7 @@ class ModuleLoader(object):
         the list of drozer Modules after loading all Python modules from the
         specified paths.
         """
-        
+
         for i in klass.__subclasses__():
-            for c in self.__subclasses_of(i):
-                yield c
-                
+            yield from self.__subclasses_of(i)
         yield klass

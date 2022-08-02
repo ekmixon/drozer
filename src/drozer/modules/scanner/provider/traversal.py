@@ -35,14 +35,14 @@ class Traversal(Module, common.FileSystem, common.PackageManager, common.Provide
 
         # print out a report
         self.stdout.write("Not Vulnerable:\n")
-        if len(uris) > 0:
+        if uris:
             for uri in uris:
                 self.stdout.write("  %s\n" % uri)
         else:
             self.stdout.write("  No non-vulnerable URIs found.\n")
 
         self.stdout.write("\nVulnerable Providers:\n")
-        if len(vulnerable) > 0:
+        if vulnerable:
             for uri in vulnerable:
                 self.stdout.write("  %s\n" % uri)
         else:
@@ -50,17 +50,20 @@ class Traversal(Module, common.FileSystem, common.PackageManager, common.Provide
 
     def __test_uri(self, uri, vulnerable):
         try:
-            data = self.contentResolver().read(uri + "/../../../../../../../../../../../../../../../../etc/hosts")
+            data = self.contentResolver().read(
+                f"{uri}/../../../../../../../../../../../../../../../../etc/hosts"
+            )
+
         except ReflectionException as e:
             if e.message.find("java.io.FileNotFoundException") >= 0 or \
-                e.message.find("java.lang.IllegalArgumentException") >= 0 or \
-                e.message.find("java.lang.SecurityException") >= 0 or \
-                e.message.find("No content provider") >= 0 or \
-                e.message.find("RuntimeException"):
+                    e.message.find("java.lang.IllegalArgumentException") >= 0 or \
+                    e.message.find("java.lang.SecurityException") >= 0 or \
+                    e.message.find("No content provider") >= 0 or \
+                    e.message.find("RuntimeException"):
                 data = ""
             else:
                 raise
-    
+
         if data != None and len(data) > 0:
             vulnerable.add(uri)
             

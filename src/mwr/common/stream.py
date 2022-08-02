@@ -101,7 +101,7 @@ def format_colors(text):
         suitable escape sequence to change colour.
         """
 
-        return "%s%s%s" % (Colors[m.group(1)], m.group(2), Colors['end'])
+        return f"{Colors[m.group(1)]}{m.group(2)}{Colors['end']}"
 
     text = re.sub("\[color\s*([a-z]+)\](.*?)\[\/color\]", replace_color, text)
 
@@ -117,7 +117,7 @@ def remove_colors(text):
         Callback function, to replace a colour tag with its content.
         """
 
-        return "%s" % (m.group(2))
+        return f"{m.group(2)}"
 
     text = re.sub("\[color\s*([a-z]+)\](.*?)\[\/color\]", remove_color, text)
 

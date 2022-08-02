@@ -41,7 +41,7 @@ class IntentTestCase(unittest.TestCase):
         def getProperty(self, ref, property_name):
             self.gotten_property = (ref, property_name)
 
-            if self.get_property_returns == None:
+            if self.get_property_returns is None:
                 return functools.partial(self._invoker, property_name)
             else:
                 return self.get_property_returns

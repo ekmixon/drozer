@@ -15,7 +15,7 @@ class ReflectedObject(ReflectedType):
         self._ref = ref
         self._class = None
         self._field_names = set()
-        self._not_field_names = set(['_ref', 'getField'])
+        self._not_field_names = {'_ref', 'getField'}
 
     def __getattr__(self, attr):
         if attr.startswith('_'):
@@ -59,9 +59,17 @@ class ReflectedObject(ReflectedType):
         reflector's invoke() method.
         """
 
-        result = self._reflector.invoke(self, method_name, *map(lambda arg: ReflectedType.fromNative(arg, reflector=self._reflector), args), **kwargs)
-
-        return result
+        return self._reflector.invoke(
+            self,
+            method_name,
+            *map(
+                lambda arg: ReflectedType.fromNative(
+                    arg, reflector=self._reflector
+                ),
+                args,
+            ),
+            **kwargs
+        )
 
     def _pb(self):
         """
@@ -76,5 +84,5 @@ class ReflectedObject(ReflectedType):
         return argument
 
     def __str__(self):
-        return "#<Object {}>".format(self._ref)
+        return f"#<Object {self._ref}>"
         

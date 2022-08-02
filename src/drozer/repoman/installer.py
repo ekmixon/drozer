@@ -127,29 +127,33 @@ class ModuleInstaller(object):
         Ensure that every directory between the repository root and a specified
         package contains an __init__.py file.
         """
-        
+
         directories = package[len(self.repository):].split(os.path.sep)
-        
+
         for i in xrange(len(directories)):
-            self.__emit(os.path.join(self.repository, *directories[0:i+1] + ["__init__.py"]))
+            self.__emit(
+                os.path.join(
+                    self.repository, *directories[: i + 1] + ["__init__.py"]
+                )
+            )
     
     def __get_combined_index(self):
         """
         Fetches INDEX files from all known remotes, and builds a combined INDEX
         listing of all available modules.
         """
-        
+
         index = set([])
-        
+
         for url in Remote.all():
             source = Remote.get(url).download("INDEX.xml")
-            
+
             if source != None:
                 modules = xml.fromstring(source)
-                
+
                 index = index.union(map(lambda m: ModuleInfo(url, m.attrib['name'], m.find("./description").text), modules.findall("./module")))
-        
-        return filter(lambda m: m != None and m != "", index)
+
+        return filter(lambda m: m not in [None, ""], index)
 
     def __install_module(self, fetch, module, force):
         """
@@ -157,12 +161,12 @@ class ModuleInstaller(object):
         """
 
         source = fetch(module)
-        
+
         # check that we successfully read source for the module, otherwise there
         # isn't much more we can do here
-        if source == None:
+        if source is None:
             raise InstallError("Failed to get module for '%s'." % module)
-        
+
         return self.__unpack_module(os.path.basename(str(module)), source, force)
 
     def __read_local_module(self, module):
@@ -198,7 +202,7 @@ class ModuleInstaller(object):
         and either write Python source into the last segment, as a module, or
         unzip a zip file into that folder.
         """
-        
+
         # we test for the presence of a zip header in the source, which we *should*
         # never see in a raw Python file:
         #
@@ -207,47 +211,50 @@ class ModuleInstaller(object):
         #
         # Because the bytes are in little-endian order, we actually must look for
         # the bytes 50 4b 03 04.
-        if source[0:4] == "\x50\x4b\x03\x04":
-            return self.__unpack_module_zip(module, source, force)
-        else:
-            return self.__unpack_module_raw(module, source, force)
-        
-        return True
+        return (
+            self.__unpack_module_zip(module, source, force)
+            if source[:4] == "\x50\x4b\x03\x04"
+            else self.__unpack_module_raw(module, source, force)
+        )
     
     def __unpack_module_raw(self, module, source, force=False):
         """
         Handles unpacking a module and installing it, if the source is a Python
         module.
         """
-        
+
         path = module.split(".")
-        
+
         # create a Python package to write the module into
-        package = self.__create_package(os.path.join(self.repository, *path[0:-1]))
-        
+        package = self.__create_package(os.path.join(self.repository, *path[:-1]))
+
         # calculate the path where we will write the module
-        path = os.path.join(package, path[-1] + ".py")
+        path = os.path.join(package, f"{path[-1]}.py")
         # ensure that we are not about to overwrite an existing module
         if os.path.exists(path) and not force:
-            raise AlreadyInstalledError("The target (%s) already exists in the repository." % module)
+            raise AlreadyInstalledError(
+                f"The target ({module}) already exists in the repository."
+            )
+
         # write the module file into the package
-        if fs.write(path, source) != None:
-            return True
-        else:
+        if fs.write(path, source) is None:
             raise InstallError("Failed to write module to repository.")
+
+        else:
+            return True
         
     def __unpack_module_zip(self, module, source, force=False):
         """
         Handles unpacking a module and installing it, if the source is a zipped
         archive.
         """
-        
-        path = module.split(".")[0:-1]
+
+        path = module.split(".")[:-1]
         # when extracting the path, we drop the last segment, because it'll be '.zip'
-        
+
         # create a Python package to write the module into
         package = self.__create_package(os.path.join(self.repository, *path))
-        
+
         # get a list of files within the archives
         archive = zipfile.ZipFile(cStringIO.StringIO(source))
         files = archive.infolist()
@@ -261,7 +268,7 @@ class ModuleInstaller(object):
                 archive.extract(f, package)
         except IOError:
             raise InstallError("Fatal error whilst unpacking the zip archive.")
-        
+
         return True
             
 class InstallError(Exception):

@@ -12,7 +12,7 @@ class BusyBox(shell.Shell):
         Get the path to which Busybox is installed on the Agent.
         """
 
-        return self.workingDir() + "/bin/busybox"
+        return f"{self.workingDir()}/bin/busybox"
 
     def _localPath(self,arch,pie):
         """
@@ -33,7 +33,7 @@ class BusyBox(shell.Shell):
         Execute a command using Busybox.
         """
 
-        return self.shellExec("%s %s" % (self.busyboxPath(), command))
+        return self.shellExec(f"{self.busyboxPath()} {command}")
 
     def isBusyBoxInstalled(self):
         """
@@ -46,14 +46,15 @@ class BusyBox(shell.Shell):
         """
         Install Busybox on the Agent.
         """
-        if self.ensureDirectory(self.busyboxPath()[0:self.busyboxPath().rindex("/")]):
+        if self.ensureDirectory(
+            self.busyboxPath()[: self.busyboxPath().rindex("/")]
+        ):
             bytes_copied = self.uploadFile(self._localPath(arch,pie), self.busyboxPath())
-    
+
             if bytes_copied != os.path.getsize(self._localPath(arch,pie)):
                 return False
-            else:
-                self.shellExec("chmod 775 " + self.busyboxPath())
-                
-                return True
+            self.shellExec(f"chmod 775 {self.busyboxPath()}")
+
+            return True
         else:
             return False

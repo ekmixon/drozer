@@ -11,11 +11,9 @@ class ReflectedNullTestCase(unittest.TestCase):
         pass
 
 def ReflectedNullTestSuite():
-    suite = unittest.TestSuite()
-
     #suite.addTest(ReflectedNullTestCase("testItShouldGetAPropertyValue"))
-    
-    return suite
+
+    return unittest.TestSuite()
   
 if __name__ == "__main__":
     unittest.TextTestRunner().run(ReflectedNullTestSuite())

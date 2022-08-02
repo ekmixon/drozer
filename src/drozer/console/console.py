@@ -111,9 +111,7 @@ class Console(cli.Base):
             return ["localhost:31415"]
         elif action.dest == "file":
             return path_completion.complete(text)
-        elif action.dest == "device":
-            return None
-        elif action.dest == "onecmd":
+        elif action.dest in ["device", "onecmd"]:
             return None
         
     def handle_error(self, throwable, fatal=False):
@@ -177,7 +175,7 @@ class Console(cli.Base):
         Get a Server object which provides a connection to the selected server.
         """
 
-        if self.__server == None:
+        if self.__server is None:
             self.__server = ServerConnector(arguments, self.__manage_trust)
 
         return self.__server

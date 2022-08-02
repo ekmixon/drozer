@@ -39,7 +39,7 @@ class Session(cmd.Cmd):
         self.__onecmd = arguments.onecmd
         self.active = True
         self.aliases = { "l": "list", "ls": "list", "ll": "list" }
-        self.intro = "drozer Console (v%s)" % meta.version
+        self.intro = f"drozer Console (v{meta.version})"
         self.history_file = os.path.sep.join([os.path.expanduser("~"), ".drozer_history"])
         self.modules = collection.ModuleCollection(loader.ModuleLoader())
         self.prompt = "dz> "
@@ -59,12 +59,15 @@ class Session(cmd.Cmd):
         else:
             dataDir = str(m.new("java.io.File", ".").getCanonicalPath().native())
 
-        self.variables = {  'PATH': dataDir +'/bin:/sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin',
-                            'WD': dataDir }
-        
+        self.variables = {
+            'PATH': f'{dataDir}/bin:/sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin',
+            'WD': dataDir,
+        }
+
+
         self.__load_variables()
-        
-        if arguments.onecmd == None:
+
+        if arguments.onecmd is None:
             self.__print_banner()
 
     def completefilename(self, text, line, begidx, endidx):
@@ -105,7 +108,11 @@ class Session(cmd.Cmd):
             namespaces = self.__namespaces(global_scope=True)
             namespaces.add("..")
 
-            return map(lambda m: "." + m, filter(lambda m: m.startswith(text[1:]), namespaces))
+            return map(
+                lambda m: f".{m}",
+                filter(lambda m: m.startswith(text[1:]), namespaces),
+            )
+
         else:
             return map(lambda m: m[len(self.__base):], filter(lambda m: m.startswith(self.__base + text), self.__namespaces()))
 
@@ -147,7 +154,7 @@ class Session(cmd.Cmd):
         """
         argv = shlex.split(args, comments=True)
 
-        if len(argv) == 1 and (argv[0] == "-h" or argv[0] == "--help"):
+        if len(argv) == 1 and argv[0] in ["-h", "--help"]:
             self.do_help("cd")
             return
 
@@ -186,10 +193,10 @@ class Session(cmd.Cmd):
         """
         Display a list of drozer contributors.
         """
-        
+
         argv = shlex.split(args, comments=True)
-        
-        if len(argv) == 1 and (argv[0] == "-h" or argv[0] == "--help"):
+
+        if len(argv) == 1 and argv[0] in ["-h", "--help"]:
             self.do_help("contributors")
             return
 
@@ -226,20 +233,23 @@ class Session(cmd.Cmd):
         """
         argv = shlex.split(args, comments=True)
 
-        if len(argv) == 1 and (argv[0] == "-h" or argv[0] == "--help"):
+        if len(argv) == 1 and argv[0] in ["-h", "--help"]:
             self.do_help("help")
             return
 
         if len(argv) > 0:
-            if self.__module_name(argv[0]) in self.modules.all(permissions=self.permissions()) or self.__module_name("." + argv[0]) in self.modules.all(permissions=self.permissions()):
+            if self.__module_name(argv[0]) in self.modules.all(
+                permissions=self.permissions()
+            ) or self.__module_name(f".{argv[0]}") in self.modules.all(
+                permissions=self.permissions()
+            ):
                 self.do_run(" ".join([argv[0], "--help"]))
             else:
                 try:
-                    func = getattr(self, 'help_' + argv[0])
+                    func = getattr(self, f'help_{argv[0]}')
                 except AttributeError:
                     try:
-                        doc = getattr(self, 'do_' + argv[0]).__doc__
-                        if doc:
+                        if doc := getattr(self, f'do_{argv[0]}').__doc__:
                             self.stdout.write("%s\n" % wrap(textwrap.dedent(str(doc)).strip(), width=console.get_size()[0]))
                             return
                     except AttributeError:
@@ -258,7 +268,7 @@ class Session(cmd.Cmd):
 
         commands = set(self.completenames(args[0]))
         modules = set(self.completemodules(args[0]))
-        topics = set(a[5:] for a in self.get_names() if a.startswith('help_' + args[0]))
+        topics = {a[5:] for a in self.get_names() if a.startswith(f'help_{args[0]}')}
 
         return list(commands | modules | topics)
 
@@ -284,27 +294,33 @@ class Session(cmd.Cmd):
         """
         argv = shlex.split(args, comments=True)
 
-        if len(argv) == 1 and (argv[0] == "-h" or argv[0] == "--help"):
+        if len(argv) == 1 and argv[0] in ["-h", "--help"]:
             self.do_help("list")
             return
-        
+
         include_unsupported = False
         if "--unsupported" in argv:
             argv.remove("--unsupported")
-            
+
             include_unsupported = True
-        
+
         term = len(argv) > 0 and argv[0] or None
-        
+
         s_modules = self.modules.all(contains=term, permissions=self.permissions(), prefix=self.__base)
-        
+
         if include_unsupported:
-            u_modules = filter(lambda m: not m in s_modules, self.modules.all(contains=term, permissions=None, prefix=self.__base))
+            u_modules = filter(
+                lambda m: m not in s_modules,
+                self.modules.all(
+                    contains=term, permissions=None, prefix=self.__base
+                ),
+            )
+
         else:
             u_modules = []
 
         self.stdout.write(console.format_dict(dict(map(lambda m: [m, self.modules.get(m).name], s_modules))) + "\n")
-        
+
         if len(u_modules) > 0:
             self.stdout.write("\nUnsupported Modules:\n\n")
             self.stdout.write(console.format_dict(dict(map(lambda m: [m, self.modules.get(m).name], u_modules))) + "\n")
@@ -317,7 +333,7 @@ class Session(cmd.Cmd):
         """
         argv = shlex.split(args, comments=True)
 
-        if len(argv) == 1 and (argv[0] == "-h" or argv[0] == "--help"):
+        if len(argv) == 1 and argv[0] in ["-h", "--help"]:
             self.do_help("load")
             return
 
@@ -375,7 +391,7 @@ class Session(cmd.Cmd):
         """
         argv = shlex.split(args, comments=True)
 
-        if len(argv) == 1 and (argv[0] == "-h" or argv[0] == "--help"):
+        if len(argv) == 1 and argv[0] in ["-h", "--help"]:
             self.do_help("run")
             return
 
@@ -384,7 +400,7 @@ class Session(cmd.Cmd):
                 module = self.__module(argv[0])
                 module.push_completer = self.__push_module_completer
                 module.pop_completer = self.__pop_module_completer
-                
+
                 self.__module_pushed_completers = 0
             except KeyError as e:
                 self.stderr.write("unknown module: %s\n" % str(e))
@@ -396,7 +412,7 @@ class Session(cmd.Cmd):
                 self.stderr.write("\nCaught SIGINT. Interrupt again to terminate you session.\n")
             except Exception as e:
                 self.handleException(e)
-            
+
             while self.__module_pushed_completers > 0:
                 self.__pop_module_completer()
         else:
@@ -414,20 +430,21 @@ class Session(cmd.Cmd):
         _line = re.match("(run\s+)([^\s]*)(\s*)", line)
 
         # figure out where the module name starts in the string
-        cmdidx = len(_line.group(1))
+        cmdidx = len(_line[1])
 
         if begidx == cmdidx:
             # if we are trying to autocomplete the module name, offer modules as suggestions
             return self.completemodules(text)
-        else:
             # otherwise, we are trying to autocomplete some options for the module, and should
             # defer to it
-            offset = len(_line.group(0))
+        offset = len(_line[0])
             # we pass over the arguments for autocompletion, but strip off the command and module
             # name for simplicity
             
             #return self.__module(_line.group(2)).complete(text, line, begidx, endidx)
-            return self.__module(_line.group(2)).complete(text, line[offset:], begidx - offset, endidx - offset)
+        return self.__module(_line[2]).complete(
+            text, line[offset:], begidx - offset, endidx - offset
+        )
 
     def do_shell(self, args):
         """
@@ -513,35 +530,45 @@ class Session(cmd.Cmd):
         self.stdout.write(wrap(textwrap.dedent(self.help_intents.__doc__).strip() + "\n\n", console.get_size()[0]))
     
     def has_context(self):
-        if self.__has_context == None:
-            self.__has_context = not self.reflector.resolve("com.mwr.dz.Agent").getContext() == None
-            
+        if self.__has_context is None:
+            self.__has_context = (
+                self.reflector.resolve("com.mwr.dz.Agent").getContext() is not None
+            )
+
+
         return self.__has_context == True
     
     def permissions(self):
         """
         Retrieves the set of permissions that we have in this session.
         """
-        
-        if self.__permissions == None and self.has_context():
-            pm = self.reflector.resolve("android.content.pm.PackageManager")
-            packageName = str(self.context().getPackageName())
-            packageManager = self.context().getPackageManager()
-            
-            package = packageManager.getPackageInfo(packageName, pm.GET_PERMISSIONS)
-            self.__permissions = []
-            if package.requestedPermissions != None:
-                requestedPermissions = map(lambda p: str(p), package.requestedPermissions)
-                
-                for permission in requestedPermissions:
-                    #Check for PERMISSION_GRANTED
-                    if (packageManager.checkPermission(str(permission), packageName) == pm.PERMISSION_GRANTED):
-                        self.__permissions.append(str(permission))
-            
-            self.__permissions.append("com.mwr.dz.permissions.GET_CONTEXT")
-        elif self.__permissions == None:
-            self.__permissions = []
-        
+
+        if self.__permissions is None:
+            if self.has_context():
+                pm = self.reflector.resolve("android.content.pm.PackageManager")
+                packageName = str(self.context().getPackageName())
+                packageManager = self.context().getPackageManager()
+
+                package = packageManager.getPackageInfo(packageName, pm.GET_PERMISSIONS)
+                self.__permissions = []
+                if package.requestedPermissions != None:
+                    requestedPermissions = map(lambda p: str(p), package.requestedPermissions)
+
+                    self.__permissions.extend(
+                        str(permission)
+                        for permission in requestedPermissions
+                        if (
+                            packageManager.checkPermission(
+                                str(permission), packageName
+                            )
+                            == pm.PERMISSION_GRANTED
+                        )
+                    )
+
+                self.__permissions.append("com.mwr.dz.permissions.GET_CONTEXT")
+            else:
+                self.__permissions = []
+
         return self.__permissions
 
     def preloop(self):
@@ -610,13 +637,13 @@ class Session(cmd.Cmd):
         except KeyError:
             pass
 
-        if module == None:
+        if module is None:
             try:
                 module = self.modules.get(key)
             except KeyError:
                 pass
 
-        if module == None:
+        if module is None:
             raise KeyError(key)
         else:
             return module(self)
@@ -645,8 +672,8 @@ class Session(cmd.Cmd):
             modules = self.modules.all(permissions=self.permissions(), prefix=None)
         else:
             self.modules.all(permissions=self.permissions(), prefix=self.__base)
-        
-        return set(map(lambda m: self.__module("." + m).namespace(), modules))
+
+        return set(map(lambda m: self.__module(f".{m}").namespace(), modules))
     
     def __push_module_completer(self, completer, history_file=None):
         """
@@ -712,7 +739,7 @@ class Session(cmd.Cmd):
 
                 target = ".".join(path)
             elif base.startswith("."):
-                target = base[1:] + "."
+                target = f"{base[1:]}."
             else:
                 target = self.__base + base + "."
 
@@ -721,11 +748,7 @@ class Session(cmd.Cmd):
             else:
                 self.stderr.write("no such namespace: %s\n"%base)
 
-        if base == "":
-            self.prompt = "dz> "
-        else:
-            self.prompt = "dz#{}> ".format(self.__base[0:len(self.__base)-1])
-
+        self.prompt = "dz> " if base == "" else f"dz#{self.__base[:-1]}> "
         return True
 
 class DebugSession(Session):
@@ -737,7 +760,7 @@ class DebugSession(Session):
     def __init__(self, server, session_id, arguments):
         Session.__init__(self, server, session_id, arguments)
 
-        self.intro = "drozer Console (v%s debug mode)" % meta.version
+        self.intro = f"drozer Console (v{meta.version} debug mode)"
         self.prompt = "dz> "
         
     def do_reload(self, args):
@@ -756,5 +779,5 @@ class DebugSession(Session):
         Invoked whenever an exception is triggered by a module, to handle the
         throwable and display some information to the user.
         """
-        self.stderr.write("exception in module: {}: {}\n".format(e.__class__.__name__, str(e)))
+        self.stderr.write(f"exception in module: {e.__class__.__name__}: {str(e)}\n")
         self.stderr.write("%s\n"%traceback.format_exc())

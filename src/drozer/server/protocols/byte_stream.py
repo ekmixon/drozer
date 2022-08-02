@@ -11,8 +11,8 @@ class ByteStream(Protocol):
         self.__file_provider = file_provider
     
     def dataReceived(self, data):
-        self.__logger.info("MAGIC %s" % data.strip())
-        
+        self.__logger.info(f"MAGIC {data.strip()}")
+
         self.transport.write(self.__file_provider.get_by_magic(data.strip()).getBody())
         self.transport.loseConnection()
         

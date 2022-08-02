@@ -63,7 +63,7 @@ class ModuleTestCase(unittest.TestCase):
         def getProperty(self, ref, property_name):
             self.gotten_property = (ref, property_name)
 
-            if self.get_property_returns == None:
+            if self.get_property_returns is None:
                 return functools.partial(self._invoker, property_name)
             else:
                 return self.get_property_returns
@@ -90,8 +90,8 @@ class ModuleTestCase(unittest.TestCase):
 
     def testItShouldGetAModuleFromTheModuleLoader(self):
         Module._Module__loader = ModuleTestCase.MockModuleLoader()
-        
-        assert Module.get("an.example.module") == None
+
+        assert Module.get("an.example.module") is None
 
     def testItShouldReturnNoneIfTheModuleLoaderHasNoModule(self):
         Module._Module__loader = ModuleTestCase.MockModuleLoader("aModule")
@@ -154,7 +154,7 @@ class ModuleTestCase(unittest.TestCase):
         module.run(["-h"])
 
         assert module.add_arguments_with != None
-        assert module.execute_with == None
+        assert module.execute_with is None
 
     def testItShouldCleanUpTheObjectStoreAfterRunning(self):
         reflector = ModuleTestCase.MockReflector()

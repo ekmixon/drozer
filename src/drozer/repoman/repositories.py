@@ -24,16 +24,15 @@ class Repository(object):
         
         If the path already exists, no repository will be created.
         """
-        
-        if not os.path.exists(path):
-            os.makedirs(path)
-            
-            open(os.path.join(path, "__init__.py"), 'w').close()
-            open(os.path.join(path, ".drozer_repository"), 'w').close()
-        
-            cls.enable(path)
-        else:
+
+        if os.path.exists(path):
             raise NotEmptyException(path)
+        os.makedirs(path)
+
+        open(os.path.join(path, "__init__.py"), 'w').close()
+        open(os.path.join(path, ".drozer_repository"), 'w').close()
+
+        cls.enable(path)
     
     @classmethod
     def delete(cls, path):
@@ -42,10 +41,10 @@ class Repository(object):
         
         If the path is not a drozer Repository, it will not be removed.
         """
-        
+
         if cls.is_repo(path):
             cls.disable(path)
-            
+
             shutil.rmtree(path)
         else:
             raise UnknownRepository(path)
@@ -113,7 +112,7 @@ class NotEmptyException(Exception):
         self.path = path
     
     def __str__(self):
-        return "The path %s is not empty." % self.path
+        return f"The path {self.path} is not empty."
     
     
 class UnknownRepository(Exception):
@@ -127,5 +126,5 @@ class UnknownRepository(Exception):
         self.path = path
     
     def __str__(self):
-        return "Unknown Repository: %s" % self.path
+        return f"Unknown Repository: {self.path}"
     

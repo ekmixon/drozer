@@ -68,12 +68,12 @@ class ModuleManager(cli.Base):
         parses the command-line arguments, and invokes an appropriate handler.
         """
 
-        if argv == None:
+        if argv is None:
             argv = []
 
         arguments = self._parser.parse_args(argv)
 
-        if arguments.help or arguments.command == None:
+        if arguments.help or arguments.command is None:
             self._parser.print_help()
         else:
             try:
@@ -225,12 +225,12 @@ class RemoteManager(cli.Base):
         parses the command-line arguments, and invokes an appropriate handler.
         """
 
-        if argv == None:
+        if argv is None:
             argv = []
 
         arguments = self._parser.parse_args(argv)
 
-        if arguments.help or arguments.command == None:
+        if arguments.help or arguments.command is None:
             self._parser.print_help()
         else:
             try:
@@ -336,12 +336,12 @@ class RepositoryManager(cli.Base):
         parses the command-line arguments, and invokes an appropriate handler.
         """
 
-        if argv == None:
+        if argv is None:
             argv = []
 
         arguments = self._parser.parse_args(argv)
 
-        if arguments.help or arguments.command == None:
+        if arguments.help or arguments.command is None:
             self._parser.print_help()
         else:
             try:

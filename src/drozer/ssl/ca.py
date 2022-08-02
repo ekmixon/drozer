@@ -42,14 +42,14 @@ class CA(object):
         """
         Create and sign a certificate, using the CA.
         """
-        
+
         if self.has_ca():
             key = self.__generate_rsa_key()
             cert = self.__generate_certificate(key, cn)
             cert.set_issuer(self.ca_cert.get_subject())
-            
+
             self.__sign_certificate(cert)
-            
+
             return (key, cert)
         else:
             raise NoKeyMaterialError()
@@ -65,13 +65,13 @@ class CA(object):
         """
         Load the key material for a CA, and use it to initialise this object.
         """
-        
+
         self.ca_key = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, key)
         self.ca_cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
-        
+
         if not self.verify_ca():
             self.ca_key = self.ca_cert = None
-            
+
             return False
         else:
             return True

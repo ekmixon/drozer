@@ -51,12 +51,12 @@ class ClassBuilder(object):
         """
         Test if all elements of the build path have been properly initialised.
         """
-        
-        if self.sdk_path == None:
+
+        if self.sdk_path is None:
             raise RuntimeError("SDK is not defined. Please set SDK to the path to android.jar within the SDK.")
-        if self.javac == None:
+        if self.javac is None:
             raise RuntimeError("Could not find javac on your PATH.")
-        if self.dx == None:
+        if self.dx is None:
             raise RuntimeError("Could not find dx on your PATH.")
         
     def __execute(self, *argv):
@@ -76,8 +76,11 @@ class ClassBuilder(object):
         Calculate a unique name for the generated APK file, based on the content
         of the source file.
         """
-        
-        return os.path.join(os.path.dirname(self.path), binascii.hexlify(hashlib.md5(self.__get_source()).digest()) + ".apk")
+
+        return os.path.join(
+            os.path.dirname(self.path),
+            f"{binascii.hexlify(hashlib.md5(self.__get_source()).digest())}.apk",
+        )
         
     def __get_source(self):
         """

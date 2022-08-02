@@ -50,13 +50,20 @@ drozer is open source software, maintained by MWR InfoSecurity, and can be downl
 
 def latest_version():
     try:
-        xml = urlopen(Request("https://www.mwrinfosecurity.com/products/drozer/community-edition/manifest.xml", None, {"user-agent": "drozer: %s" % version}), None, 1).read()
+        xml = urlopen(
+            Request(
+                "https://www.mwrinfosecurity.com/products/drozer/community-edition/manifest.xml",
+                None,
+                {"user-agent": f"drozer: {version}"},
+            ),
+            None,
+            1,
+        ).read()
+
         doc = ElementTree.fromstring(xml)
-        
+
         return max(map(lambda n: Version(n.text[1:], n.attrib['release_date']), doc.findall('version')))
-    except HTTPError:
-        return None
-    except URLError:
+    except (HTTPError, URLError):
         return None
 
 def print_version():

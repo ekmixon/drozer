@@ -21,7 +21,10 @@ class Debuggable(Module, common.Filters, common.PackageManager):
         for package in self.packageManager().getPackages(common.PackageManager.GET_PERMISSIONS):
             application = package.applicationInfo
 
-            if arguments.filter == None or package.packageName.upper().find(arguments.filter.upper()) >= 0:
+            if (
+                arguments.filter is None
+                or package.packageName.upper().find(arguments.filter.upper()) >= 0
+            ):
                 if (application.flags & Debuggable.FLAG_DEBUGGABLE) != 0:
                     self.stdout.write("Package: %s\n"%package.packageName)
                     self.stdout.write("  UID: %s\n"%application.uid)

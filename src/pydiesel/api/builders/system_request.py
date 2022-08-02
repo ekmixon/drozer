@@ -19,7 +19,7 @@ class SystemRequestFactory:
         self.builder.system_request.device.manufacturer = device.manufacturer
         self.builder.system_request.device.model = device.model
         self.builder.system_request.device.software = device.software
-        
+
         return self
     
     def addDeviceId(self, device_id):
@@ -34,7 +34,7 @@ class SystemRequestFactory:
         self.builder.system_request.device.manufacturer = "N/A"
         self.builder.system_request.device.model = "N/A"
         self.builder.system_request.device.software = "N/A"
-        
+
         return self
     
     def build(self):
@@ -59,9 +59,7 @@ class SystemRequestFactory:
         devices.
         """
 
-        builder = SystemRequestFactory(Message.SystemRequest.LIST_DEVICES)
-
-        return builder
+        return SystemRequestFactory(Message.SystemRequest.LIST_DEVICES)
 
     @classmethod
     def listSessions(cls):
@@ -70,9 +68,7 @@ class SystemRequestFactory:
         sessions.
         """
 
-        builder = SystemRequestFactory(Message.SystemRequest.LIST_SESSIONS)
-
-        return builder
+        return SystemRequestFactory(Message.SystemRequest.LIST_SESSIONS)
         
     @classmethod
     def ping(cls):
@@ -80,9 +76,7 @@ class SystemRequestFactory:
         Helper method to build a ping request.
         """
 
-        builder = SystemRequestFactory(Message.SystemRequest.PING)
-        
-        return builder
+        return SystemRequestFactory(Message.SystemRequest.PING)
     
     def setId(self, message_id):
         """

@@ -16,14 +16,14 @@ class FileProvider(object):
         return len(self.__store)
     
     def create(self, resource, body, magic=None, mimetype=None, multipart=None, custom_headers=None):
-        if multipart == None:
+        if multipart is None:
             self.__store[resource] = InMemoryResource(resource, body, magic=magic, mimetype=mimetype, custom_headers=custom_headers)
-            
+
             return self.__store[resource].getBody() == body
         else:
             self.__store[resource] = InMemoryMultipartResource(resource, body, boundary=multipart.split("=")[1], magic=magic, mimetype=mimetype, custom_headers=custom_headers)
-            
-            
+
+
             return self.__store[resource].valid()
         
     def delete(self, resource):
@@ -31,26 +31,20 @@ class FileProvider(object):
         
     def get(self, resource):
         for key in self.__store:
-            if re.match("^" + key  + "$", resource) != None:
+            if re.match(f"^{key}$", resource) != None:
                 return self.__store[key]
-        
+
         return ErrorResource(resource, 404, "The resource %s could not be found on this server.")
     
     def get_by_magic(self, magic):
         resources = filter(lambda r: self.__store[r].magic == magic, self.__store)
-        
-        if len(resources) == 1:
-            return self.__store[resources[0]]
-        else:
-            return None
+
+        return self.__store[resources[0]] if len(resources) == 1 else None
     
     def has_magic_for(self, magic):
         resources = filter(lambda r: self.__store[r].magic == magic, self.__store)
-        
-        if len(resources) == 1:
-            return True
-        else:
-            return False
+
+        return len(resources) == 1
         
         
 class Resource(object):
@@ -63,7 +57,7 @@ class Resource(object):
         self.custom_headers = custom_headers
 
     def download(self, path):
-        if not path in self.downloadCount:
+        if path not in self.downloadCount:
             self.downloadCount[path] = 1
         else:
             self.downloadCount[path] += 1
@@ -79,7 +73,7 @@ class CreatedResource(Resource):
     
     def __init__(self, resource):
         Resource.__init__(self, resource, False)
-        
+
         self.code = 201
         self.description = "Location: %s"
         self.resource = resource
@@ -127,35 +121,34 @@ class InMemoryMultipartResource(Resource):
     
     def __init__(self, resource, body, boundary, magic=None, mimetype=None, custom_headers=None):
         Resource.__init__(self, resource, magic=magic, reserved=False, custom_headers=custom_headers)
-        
+
         self.body = {}
         self.mimetype = mimetype
         self.__valid = False
-        
-        for part in re.split("^--" + boundary + "; ([^$]+)$", body):
+
+        for part in re.split(f"^--{boundary}; ([^$]+)$", body):
             if part.strip() == "":
                 continue
-            
-            self.body[part[0:part.find("\n")]]  = part[part.find("\n")+1:]
-        
+
+            self.body[part[:part.find("\n")]] = part[part.find("\n")+1:]
+
         self.__valid = len(self.body) > 0
     
     def getBody(self, user_agent):
-        for k in self.body:
-            if re.match(k, user_agent) != None:
-                return self.body[k]
-            
-        return None
+        return next(
+            (self.body[k] for k in self.body if re.match(k, user_agent) != None),
+            None,
+        )
     
     def getResponse(self, request):
         headers = {}
         if self.mimetype != None:
             headers['Content-Type'] = self.mimetype
-            
+
         body = self.getBody(request.headers['User-Agent'])
 
         headers = dict(headers.items() + self.custom_headers.items())
-        
+
         if body != None:
             return HTTPResponse(status=200, headers=headers, body=body)
         else:
@@ -193,14 +186,10 @@ class StatusResource(Resource):
 
     def getBody(self, path):
         if path == "":
-            return "This server has " + str(self.__fileProvider.count()) + " files."
-        else:
-            downloadCounts = self.__fileProvider.get(path).downloadCount
+            return f"This server has {str(self.__fileProvider.count())} files."
+        downloadCounts = self.__fileProvider.get(path).downloadCount
 
-            if path in downloadCounts:
-                return str(downloadCounts[path])
-            else:
-                return "0"
+        return str(downloadCounts[path]) if path in downloadCounts else "0"
 
     def getResponse(self, request):
         return HTTPResponse(status=200, headers={}, body=self.getBody(request.resource[8:]))

@@ -23,11 +23,9 @@ class ReflectionResponseForwarder:
             raise Exception("is not a REFLECTION_RESPONSE")
         if not message.HasField('reflection_response'):
             raise Exception("does not contain a REFLECTION_RESPONSE")
-        
+
         session = Sessions.get(message.reflection_response.session_id)
 
         if session is not None:
             session.console.write(message.SerializeToString())
-        else:
-            print "no session:", message.reflection_response.session_id
             

@@ -89,8 +89,11 @@ class ProtocolSwitcher(Protocol):
         When a connection is first established, no protocol is selected.
         """
 
-        self.__logger.debug("accepted incoming connection from " + str(self.transport.getPeer()))
-        
+        self.__logger.debug(
+            f"accepted incoming connection from {str(self.transport.getPeer())}"
+        )
+
+
         self.protocol = None
     
     def dataReceived(self, data):
@@ -99,19 +102,25 @@ class ProtocolSwitcher(Protocol):
         routed to the appropriate handler.
         """
 
-        if self.protocol == None:
+        if self.protocol is None:
             protocol = self.__chooseProtocol(data)
-            
+
             if protocol is not None:
-                self.__logger.debug("switching protocol to " + protocol.name + " for " + str(self.transport.getPeer()))
-                
+                self.__logger.debug(
+                    f"switching protocol to {protocol.name} for {str(self.transport.getPeer())}"
+                )
+
+
                 self.protocol = protocol
-                
+
                 self.protocol.makeConnection(self.transport)
                 self.protocol.dataReceived(data)
             else:
-                self.__logger.error("unrecognised protocol from " + str(self.transport.getPeer()))
-                
+                self.__logger.error(
+                    f"unrecognised protocol from {str(self.transport.getPeer())}"
+                )
+
+
                 self.transport.loseConnection()
         else:
             self.protocol.dataReceived(data)

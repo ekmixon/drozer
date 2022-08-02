@@ -27,7 +27,7 @@ class ReflectionRequestForwarder:
             raise Exception("is not a REFLECTION_REQUEST")
         if not message.HasField('reflection_request'):
             raise Exception("does not contain a REFLECTION_REQUEST")
-        
+
         session = Sessions.get(message.reflection_request.session_id)
 
         if session is not None:
@@ -37,6 +37,4 @@ class ReflectionRequestForwarder:
                 session.console.write(ReflectionResponseFactory.fatal(str(e)).inReplyTo(message).build())
 
                 session.console.transport.loseConnection()
-        else:
-            print "no session:", message.reflection_request.session_id
             

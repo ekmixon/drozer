@@ -31,11 +31,9 @@ class SessionCollection(set):
         Retrieve a Session from the collection, by identifier.
         """
 
-        for session in self:
-            if session.session_id == session_id:
-                return session
-
-        return None
+        return next(
+            (session for session in self if session.session_id == session_id), None
+        )
 
 
 Sessions = SessionCollection()

@@ -15,16 +15,10 @@ class ReflectedNull(ReflectedType):
         return Message.Argument(type=Message.Argument.NULL)
 
     def __eq__(self, other):
-        if(other == None):
-            return True
-        else:
-            return ReflectedType.__eq__(self, other)
+        return True if (other == None) else ReflectedType.__eq__(self, other)
 
     def __ne__(self, other):
-        if(other == None):
-            return False
-        else:
-            return ReflectedType.__ne__(self, other)
+        return False if (other == None) else ReflectedType.__ne__(self, other)
 
     def __str__(self):
         return "null"

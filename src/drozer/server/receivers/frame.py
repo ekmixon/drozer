@@ -26,9 +26,7 @@ class FrameReceiver(StreamReceiver):
         Attempts to get a frame from the data in the stream.
         """
 
-        frame = Frame.readFrom(self.stream)
-        
-        return frame
+        return Frame.readFrom(self.stream)
 
     def streamReceived(self):
         """

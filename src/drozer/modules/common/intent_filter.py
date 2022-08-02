@@ -18,7 +18,7 @@ class IntentFilter(assets.Assets, loader.ClassLoader):
         filters.update(map(self.__parse_filter, xml.findall(self.__filter_xpath % (endpoint_type, str(endpoint.name)[len(endpoint.packageName):]))))
         filters.update(map(self.__parse_filter, xml.findall(self.__filter_xpath % (endpoint_type, str(endpoint.name)[len(endpoint.packageName)+1:]))))
         filters.update(map(self.__parse_filter, xml.findall(self.__filter_xpath % (endpoint_type, str(endpoint.name)))))
-        
+
         return filters
 
     def __parse_filter(self, element):
@@ -55,12 +55,10 @@ class IntentFilter(assets.Assets, loader.ClassLoader):
             path_pattern = 'pathPattern' in attrs and attrs['pathPattern']
 
             paths = filter(None, [path, path_prefix, path_pattern])
-            datas = map(lambda x: cls(scheme, host, port, x, mimetype), paths or [None])
-
-            return datas
+            return map(lambda x: cls(scheme, host, port, x, mimetype), paths or [None])
 
         def __str__(self):
-            return "%s://%s:%s%s (type: %s)" % (self.scheme or "*", self.host or "*", self.port or "*", self.path or "*", self.mimetype or "*")
+            return f'{self.scheme or "*"}://{self.host or "*"}:{self.port or "*"}{self.path or "*"} (type: {self.mimetype or "*"})'
 
 
     class Filter(object):

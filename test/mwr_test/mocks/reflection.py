@@ -50,7 +50,4 @@ class MockReflector(reflection.Reflector):
         self.sent = Message()
         self.sent.ParseFromString(factory.setId(555).setSessionId("555").build())
 
-        if len(self.reply_with) > 0:
-            return self.reply_with.pop(0)
-        else:
-            return None
+        return self.reply_with.pop(0) if len(self.reply_with) > 0 else None

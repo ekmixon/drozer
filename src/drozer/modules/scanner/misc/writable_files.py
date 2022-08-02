@@ -23,30 +23,27 @@ Discovered world-writable files in /data:
         if self.isBusyBoxInstalled():
             command = self.busyboxPath() + " find %s \( -type b -o -type c -o -type f -o -type s \) -perm -o=w \-exec ls {} \;" % arguments.target
             privileged = arguments.privileged
-            
+
             if privileged:
                 if self.isAnySuInstalled():
                     command = self.suPath() + " -c \"%s\"" % command
                 else:
                     self.stdout.write("su is not installed...reverting back to unprivileged mode\n")
                     privileged = False
-                    
+
             files = self.shellExec(command)
-            writable_files = []
-
-            for f in iter(files.split("\n")):
-                if not f.startswith('find: ') and len(f.strip()) > 0:
-                    writable_files.append(f)
-
-            if len(writable_files) > 0:
+            if writable_files := [
+                f
+                for f in iter(files.split("\n"))
+                if not f.startswith('find: ') and len(f.strip()) > 0
+            ]:
                 self.stdout.write("Discovered world-writable files in %s:\n" % arguments.target)
                 for f in writable_files:
                     self.stdout.write("  %s\n" % f)
+            elif privileged:
+                self.stdout.write("No world-writable files found in %s\n" % arguments.target)
             else:
-                if privileged:
-                    self.stdout.write("No world-writable files found in %s\n" % arguments.target)
-                else:
-                    self.stdout.write("No world-writable files found in %s\nTry running again with --privileged option just to make sure (requires root)\n" % arguments.target)
+                self.stdout.write("No world-writable files found in %s\nTry running again with --privileged option just to make sure (requires root)\n" % arguments.target)
         else:
             self.stderr.write("This command requires BusyBox to complete. Run tools.setup.busybox and then retry.\n")
 

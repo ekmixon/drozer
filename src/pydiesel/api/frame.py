@@ -109,9 +109,7 @@ class Frame:
         return None
             
     def __repr__(self):
-        return "<pydiesel.api.Frame version={} length={} {} {} />".format(
-            self.version, self.length, self.isValid() and 'VALID' or 'INVALID',
-            self.messageType())
+        return f"<pydiesel.api.Frame version={self.version} length={self.length} {self.isValid() and 'VALID' or 'INVALID'} {self.messageType()} />"
         
     def __str__(self):
         return pack(">II", self.version, self.length) + self.payload

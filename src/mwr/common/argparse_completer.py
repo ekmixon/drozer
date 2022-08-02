@@ -24,17 +24,17 @@ class ArgumentParserCompleter(object):
         this point, and converts them into a list() of suggestions.
         """
         real_offset, text, words, word = self.__get_additional_metadata(text, line, begidx, endidx)
-        
-        
+
+
         suggestions = []
-        
+
         pos_actions = self.__get_positional_actions()
         offset = word - offs
         if pos_actions is not None and (offset < len(pos_actions)):
             suggestions.extend(filter(lambda s: s.startswith(text), self.__get_suggestions_for(self.__get_positional_action(offset), text, line)))
         else:
             offer_flags = True
-        
+
             # find the last option flag in the line, if there was one
             flag, value_index = self.__get_flag_metadata(words, word)
             # if we found a previous flag, we try to offer suggestions for it
@@ -43,9 +43,9 @@ class ArgumentParserCompleter(object):
 
                 if action != None:
                     _suggestions, offer_flags = self.__offer_action_suggestions(action, value_index, text, line)
-                    
+
                     suggestions.extend(filter(lambda s: s.startswith(text), _suggestions))
-                
+
             # if we could be trying to type an option flag, add them to the
             # suggestions
             if offer_flags:
@@ -81,18 +81,18 @@ class ArgumentParserCompleter(object):
         # before we get it; so we must rewind the line a little to make sure we
         # have collected them
         while i > 0 and line[i-1] == "-":
-            text = "-" + text
+            text = f"-{text}"
             i -= 1
-            
-        split_line = [s for s in re.split("((?<!\\\\)\\s)", line)]
+
+        split_line = list(re.split("((?<!\\\\)\\s)", line))
         # identify the unique tokens in the command-so-far
         words =  [s for s in split_line if s != " "]
         # identify which word we are trying to complete
         word = len([x.start() for x in re.finditer("((?<!\\\\)\\s)", line[:begidx])])
-       
+
         # TODO: this isn't a very good representation, multiple spaces between
         # adjacent words would f*** it up, as would escaped spaces and such
-        
+
         return (i, text, words, word)
     
     def __get_flag_metadata(self, words, word):
@@ -101,14 +101,14 @@ class ArgumentParserCompleter(object):
         token before the current token and calculate our offset from it (in terms
         of tokens).
         """
-        
+
         flags = self.__get_flags(words, word)
-        
+
         if len(flags) > 0:
             flag_word = flags[-1]
             flag_index = len(words) - words[-1::-1].index(flag_word) - 1
             value_index = word - flag_index - 1
-                    
+
             return (flag_word, value_index)
         else:
             return (None, None)
@@ -117,8 +117,8 @@ class ArgumentParserCompleter(object):
         """
         Filter the list of tokens to include only those that are flags.
         """
-        
-        return filter(lambda w: w.startswith("-"), words[0:word])
+
+        return filter(lambda w: w.startswith("-"), words[:word])
         
     def __get_positional_action(self, word):
         """
@@ -127,7 +127,7 @@ class ArgumentParserCompleter(object):
         """
         if len(self.parser._positionals._group_actions) == 0:
             return None
-        
+
         #if self.parser._positionals._group_actions[0].dest != "command":
         #    word = word-1
 
@@ -153,46 +153,42 @@ class ArgumentParserCompleter(object):
             suggestions = path_completion.complete(text)
         else:                                               # we don't know, defer to the provider
             suggestions = self.provider.get_completion_suggestions(action, text, line, **kwargs)
-        
-        if suggestions != None:
-            return suggestions
-        else:
-            return []
+
+        return suggestions if suggestions != None else []
         
     def __offer_action_suggestions(self, action, value_index, text, line):
         """
         __offer_action_suggestions() works out the suggestions to give for an action,
         and whether or not it is valid to suggest a flag at this point.
         """
-        
+
         nargs = action.nargs
         # if nargs is None, we assume the default: 1
-        if nargs == None:
+        if nargs is None:
             nargs = 1
-        
+
         # depending on the nargs we are expecting, we need to behave slightly
         # differently
-        if nargs == "+":
-            if value_index == 0:
-                # we are completing the first element of an unbounded, but required list
-                return (self.__get_suggestions_for(action, text, line, idx=value_index), False)
-            else:
-                # we are completing the nth element of an unbounded, but required list
-                return (self.__get_suggestions_for(action, text, line, idx=value_index), True)
-        elif nargs == "*":
-            # we are completing the nth element of an unbounded list
-                return (self.__get_suggestions_for(action, text, line, idx=value_index), True)
+        if nargs == "+" and value_index == 0:
+            # we are completing the first element of an unbounded, but required list
+            return (self.__get_suggestions_for(action, text, line, idx=value_index), False)
+        elif nargs in ["+", "*"]:
+            # we are completing the nth element of an unbounded, but required list
+            return (self.__get_suggestions_for(action, text, line, idx=value_index), True)
         elif nargs == "?" and value_index == 0:
             # we are completing an optional value
             return (self.__get_suggestions_for(action), True)
         else:
-            if value_index < nargs:
-                # we are completing the value_index-th element of an fixed list
-                return (self.__get_suggestions_for(action, text, line, idx=value_index), False)
-            else:
-                # we aren't actually completing anything - the last flag has all
-                # of the values it expects
-                return ([], True)
+            return (
+                (
+                    self.__get_suggestions_for(
+                        action, text, line, idx=value_index
+                    ),
+                    False,
+                )
+                if value_index < nargs
+                else ([], True)
+            )
                 
     def __offer_flag_suggestions(self):
         """

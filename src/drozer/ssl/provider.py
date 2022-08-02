@@ -27,12 +27,12 @@ class Provider(object):
         """
         Get the path to the CA Key Material, as defined by the configuration file.
         """
-        
+
         ca_path = Configuration.get("ssl", "ca_path")
-        
-        if ca_path == None and skip_default == False:
+
+        if ca_path is None and skip_default == False:
             ca_path = os.path.join(os.path.dirname(__file__), "embedded_ca")
-        
+
         return ca_path
 
     def certificate_exists(self):
@@ -97,12 +97,12 @@ class Provider(object):
         """
         True, if a keypair by the specified CN exists.
         """
-        
-        if self.ca_path(skip_default) == None:
+
+        if self.ca_path(skip_default) is None:
             return False
-        
+
         key, certificate = self.get_keypair(cn, skip_default)
-        
+
         return os.path.exists(key) and os.path.exists(certificate)
     
     def make_bks_key_store(self, cn, p12_path, export_password, store_password, key_password):
@@ -198,19 +198,27 @@ class Provider(object):
         """
         Prepare a PKCS12 package, given a key and a certificate.
         """
-        
-        if export_password == None:
-            export_password = ''.join(random.choice(list("abcdefghijklmnopqrstuvwxyz01234556789")) for x in range(12))
-        
+
+        if export_password is None:
+            export_password = ''.join(
+                random.choice(list("abcdefghijklmnopqrstuvwxyz01234556789"))
+                for _ in range(12)
+            )
+
+
         pkcs12 = OpenSSL.crypto.PKCS12()
         pkcs12.set_friendlyname("drozer")
         pkcs12.set_ca_certificates([self.authority.ca_cert])
         pkcs12.set_certificate(cert)
         pkcs12.set_privatekey(key)
-        
-        fs.write(os.path.join(self.ca_path(), "%s.p12" % cn), pkcs12.export(export_password))
-        
-        return (os.path.join(self.ca_path(), "%s.p12" % cn), export_password)
+
+        fs.write(
+            os.path.join(self.ca_path(), f"{cn}.p12"),
+            pkcs12.export(export_password),
+        )
+
+
+        return os.path.join(self.ca_path(), f"{cn}.p12"), export_password
         
     def provision(self, path):
         """
@@ -244,10 +252,10 @@ class Provider(object):
         -1 - Not Trusted
         -2 - Wrong Certificate
         """
-        
+
         known_certificate = self.trusted_certificate_for(peer)
-        
-        if known_certificate == None:
+
+        if known_certificate is None:
             return -1
         elif known_certificate == self.digest(certificate):
             return 0
@@ -265,8 +273,8 @@ class Provider(object):
         """
         Get the path to a BouncyCastle KeyStore file.
         """
-        
-        return os.path.join(self.ca_path(), "%s.bks" % cn)
+
+        return os.path.join(self.ca_path(), f"{cn}.bks")
         
     def __ca_key_path(self):
         """
@@ -279,22 +287,22 @@ class Provider(object):
         """
         Get the path to a certificate file.
         """
-        
-        return os.path.join(self.ca_path(skip_default), "%s.crt" % cn)
+
+        return os.path.join(self.ca_path(skip_default), f"{cn}.crt")
     
     def __jks_path(self, cn):
         """
         Get the path to a JKS KeyStore file.
         """
-        
-        return os.path.join(self.ca_path(), "%s.jks" % cn)
+
+        return os.path.join(self.ca_path(), f"{cn}.jks")
     
     def __key_path(self, cn, skip_default=False):
         """
         Get the path to a key file.
         """
-        
-        return os.path.join(self.ca_path(skip_default), "%s.key" % cn)
+
+        return os.path.join(self.ca_path(skip_default), f"{cn}.key")
         
     def __load_key_material(self):
         """

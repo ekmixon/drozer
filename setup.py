@@ -29,11 +29,11 @@ def find_libs(src):
 
 # Do a system check when installing bash complete script
 def get_install_data():
-	install_data = []
-	if platform == "linux" or platform == "linux2":
-		install_data = [('/etc/bash_completion.d',['scripts/drozer'])]
-
-	return install_data
+    return (
+        [('/etc/bash_completion.d', ['scripts/drozer'])]
+        if platform in ["linux", "linux2"]
+        else []
+    )
 
 def get_executable_scripts():
   scripts = ["bin/drozer", "bin/drozer-complete", "bin/drozer-repository"]
@@ -43,66 +43,60 @@ def get_executable_scripts():
   return scripts
 
 def get_pwd():
-	pwd = ''
+    pwd = ''
 
-	if platform == "linux" or platform == "linux2" or platform == "darwin":
-		pwd = 'src/drozer'
-	elif platform == "win32":
-		pwd = 'src\\drozer'
+    if platform in ["linux", "linux2", "darwin"]:
+        pwd = 'src/drozer'
+    elif platform == "win32":
+    	pwd = 'src\\drozer'
 
-	return pwd
+    return pwd
 
 def clear_apks():
-	pwd = get_pwd()
+    pwd = get_pwd()
 
-	if platform == 'linux' or platform == 'linux2' or platform == 'darwin':
-		pwd += '/modules'
-	elif platform == 'win32':
-		pwd += '\\modules'
+    if platform in ['linux', 'linux2', 'darwin']:
+        pwd += '/modules'
+    elif platform == 'win32':
+    	pwd += '\\modules'
 
-	for root, dirnames, filenames in os.walk(pwd):
-		for filename in filenames:
-			if (fnmatch.fnmatch(filename, "*.class") or fnmatch.fnmatch(filename, "*.apk")):
-				#print os.path.join(root, filename)
-				os.remove(os.path.join(root, filename))
+    for root, dirnames, filenames in os.walk(pwd):
+    	for filename in filenames:
+    		if (fnmatch.fnmatch(filename, "*.class") or fnmatch.fnmatch(filename, "*.apk")):
+    			#print os.path.join(root, filename)
+    			os.remove(os.path.join(root, filename))
 
 def make_apks():
 
-	pwd = get_pwd()
-	lib = os.path.dirname(os.path.realpath(__file__))
-	dx =''
+    pwd = get_pwd()
+    lib = os.path.dirname(os.path.realpath(__file__))
+    dx =''
 
-	if platform == 'linux' or 'linux2' or 'darwin':
-		pwd += '/modules'
-		lib += '/src/drozer/lib/'
-		dx = 'dx'
-	elif platform == 'win32':
-		pwd += '\\modules'
-		lib += '\\src\\drozer\\lib\\'
-		dx = 'dx.bat'
+    pwd += '/modules'
+    lib += '/src/drozer/lib/'
+    dx = 'dx'
+    #If apks exist, delete them and generate new ones
+    clear_apks()
 
-	#If apks exist, delete them and generate new ones
-	clear_apks()
+    	# Generate apks
+    for root, dirnames, filenames in os.walk(pwd):
+        for filename in filenames:
+            if (fnmatch.fnmatch(filename, "*.java")):
+                				#Compile java
+                javac_cmd = ['javac', '-cp', f'{lib}android.jar', filename]
 
-	# Generate apks
-	for root, dirnames, filenames in os.walk(pwd):
-		for filename in filenames:
-			if (fnmatch.fnmatch(filename, "*.java")):
-				#Compile java
-				javac_cmd = ['javac', '-cp', lib+'android.jar', filename]
+                #Build apk
+                m = re.search('(.+?)(\.[^.]*$|$)',filename)
+                dx_cmd = [lib+dx, '--dex', '--output=' + m[1] + '.apk', m[1] + '*.class']
 
-				#Build apk
-				m = re.search('(.+?)(\.[^.]*$|$)',filename)
-				dx_cmd = [lib+dx, '--dex', '--output='+m.group(1)+'.apk',m.group(1)+'*.class']
+                if platform in ["linux2", "linux", "darwin"]:
+                    subprocess.call(' '.join(javac_cmd),shell=True,cwd=root)
 
-				if platform == "linux2" or platform == "linux" or platform == "darwin":
-					subprocess.call(' '.join(javac_cmd),shell=True,cwd=root)
+                    subprocess.call(' '.join(dx_cmd),shell=True,cwd=root)
+                elif platform == "win32":
+                	subprocess.call(javac_cmd,shell=True,cwd=root)
 
-					subprocess.call(' '.join(dx_cmd),shell=True,cwd=root)
-				elif platform == "win32":
-					subprocess.call(javac_cmd,shell=True,cwd=root)
-
-					subprocess.call(dx_cmd,shell=True,cwd=root)
+                	subprocess.call(dx_cmd,shell=True,cwd=root)
 
 def get_package_data():
 	data = {"":[]}

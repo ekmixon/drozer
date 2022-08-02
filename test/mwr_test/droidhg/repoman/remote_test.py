@@ -70,8 +70,8 @@ class RemoteTestCase(unittest.TestCase):
     
     def testItShouldGetNoneIfARemoteDoesNotExist(self):
         Configuration._Configuration__config = self.mockConfigWithRemotes([])
-        
-        assert Remote.get("http://myremote.com/") == None
+
+        assert Remote.get("http://myremote.com/") is None
     
     def testItShouldConstructAValidDownloadPathIfATrailingSlashIsGiven(self):
         assert Remote("http://myremote.com/").buildPath("INDEX") == "http://myremote.com/INDEX"

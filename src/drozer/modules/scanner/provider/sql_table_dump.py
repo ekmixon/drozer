@@ -21,9 +21,11 @@ class SqlTables(Module, common.FileSystem, common.PackageManager, common.Provide
         if arguments.package_or_uri != None and arguments.package_or_uri.startswith("content://"):
             results.append(self.__test_uri(arguments.package_or_uri))
         else:
-            for uri in self.findAllContentUris(arguments.package_or_uri):
-                results.append(self.__test_uri(uri))
-        
+            results.extend(
+                self.__test_uri(uri)
+                for uri in self.findAllContentUris(arguments.package_or_uri)
+            )
+
         if results: 
             self.stdout.write('\n'.join(filter(None, results)) + '\n')
         else:
@@ -38,7 +40,11 @@ class SqlTables(Module, common.FileSystem, common.PackageManager, common.Provide
                     cursor = self.contentResolver().query(uri, projection=["* from sqlite_master--"])
                     resultSet = self.getResultSet(cursor)
                     listOfTables = filter(lambda x: str(x[0]) == "table", resultSet[1:]) # exclude indexes
-                    return "Accessible tables for uri " + uri + ":\n  " + \
-                                   "\n  ".join(str(x[1]) for x in listOfTables) + "\n"
+                    return (
+                        f"Accessible tables for uri {uri}"
+                        + ":\n  "
+                        + "\n  ".join(str(x[1]) for x in listOfTables)
+                    ) + "\n"
+
                 except:
                     pass

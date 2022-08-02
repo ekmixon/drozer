@@ -18,15 +18,15 @@ class FindUris(Module, common.FileSystem, common.PackageManager, common.Provider
     
     def execute(self, arguments):
         accessible_uris = set([])
-        
+
         # attempt to query each content uri
         for uri in self.findAllContentUris(arguments.package):
             try:
                 response = self.contentResolver().query(uri)
             except ReflectionException:
                 response = None
-            
-            if response == None:
+
+            if response is None:
                 self.stdout.write("Unable to Query  %s\n" % uri)
             else:
                 self.stdout.write("Able to Query    %s\n" % uri)
@@ -34,7 +34,7 @@ class FindUris(Module, common.FileSystem, common.PackageManager, common.Provider
                 accessible_uris.add(uri)
 
         # print out a report
-        if len(accessible_uris) > 0:
+        if accessible_uris:
             self.stdout.write("\nAccessible content URIs:\n")
             for uri in accessible_uris:
                 self.stdout.write("  %s\n" % uri)

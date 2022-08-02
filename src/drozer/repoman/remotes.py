@@ -14,7 +14,7 @@ class Remote(object):
     """
     
     def __init__(self, url):
-        self.url = url.endswith("/") and url or url + "/"
+        self.url = url.endswith("/") and url or f"{url}/"
         
     @classmethod
     def all(cls):
@@ -37,39 +37,34 @@ class Remote(object):
         
         If the URL already exists, no remote will be created.
         """
-        
-        if cls.get(url) == None:
-            Configuration.set('remotes', url, url)
-            
-            return True
-        else:
+
+        if cls.get(url) is not None:
             return False
+        Configuration.set('remotes', url, url)
+
+        return True
     
     @classmethod
     def delete(cls, url):
         """
         Removes a drozer remote, with the specified URL.
         """
-        
-        if cls.get(url) != None:
-            Configuration.delete('remotes', url)
-            
-            return True
-        else:
+
+        if cls.get(url) is None:
             raise UnknownRemote(url)
+        Configuration.delete('remotes', url)
+
+        return True
     
     @classmethod
     def get(cls, url):
         """
         Get an instance of Remote, initialised with the remote settings.
         """
-        
+
         url = Configuration.get('remotes', url)
-        
-        if url != None:
-            return cls(url)
-        else:
-            return None
+
+        return cls(url) if url != None else None
     
     def buildPath(self, path):
         """
@@ -140,5 +135,5 @@ class UnknownRemote(Exception):
         self.url = url
     
     def __str__(self):
-        return "The remote %s is not registered." % self.url
+        return f"The remote {self.url} is not registered."
     

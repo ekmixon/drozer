@@ -14,7 +14,7 @@ class Shell(file_system.FileSystem, loader.ClassLoader):
 
         ShellWrapper = self.loadClass("common/ShellWrapper.apk", "ShellWrapper")
 
-        return ShellWrapper.execute("%s; %s" % (self.__get_variables(), command))
+        return ShellWrapper.execute(f"{self.__get_variables()}; {command}")
     
     def shellStart(self, command=""):
         """
@@ -31,25 +31,25 @@ class Shell(file_system.FileSystem, loader.ClassLoader):
             self.__send_variables(shell)
         else:
             in_shell = False
-            self.stderr.write("Unable to connect to shell")             
+            self.stderr.write("Unable to connect to shell")
         while in_shell:
             try:
                 shell.write(command)
                 response = shell.read()
-                
+
                 if not shell.valid():
                     in_shell = False
                     continue
-                
+
                 self.stdout.write(response.strip())
-                self.stdout.write(shell.read().strip() + " ")
+                self.stdout.write(f"{shell.read().strip()} ")
                 command = raw_input()
             except ReflectionException as e:
                 if str(e.message) == "Broken pipe":
                     in_shell = False
                 else:
                     raise
-            
+
         shell.close()
             
     def __get_variables(self):
@@ -59,6 +59,6 @@ class Shell(file_system.FileSystem, loader.ClassLoader):
         shell.write(self.__get_variables())
 
         if 'WD' in self.variables:
-            shell.write("cd %s" % (self.variables['WD']))
+            shell.write(f"cd {self.variables['WD']}")
 
         shell.read()

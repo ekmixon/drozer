@@ -33,39 +33,38 @@ class SystemRequestHandler(handlers.SystemRequestHandler):
         request to refresh the list of active sessions is queued for later.
         """
 
-        if message.system_request.HasField('device'):
-            device = Devices.addFromProtobuf(message.system_request.device)
-            
-            if device in Devices:
-                self.connection.device = device
-                device.connection = self.connection
+        if not message.system_request.HasField('device'):
+            return SystemResponseFactory\
+                    .error(Message.SystemResponse.BOUND, "no device specified")\
+                    .inReplyTo(message)\
+                    .build()
+        device = Devices.addFromProtobuf(message.system_request.device)
 
-                def enumerateSessions():
-                    """
+        if device in Devices:
+            self.connection.device = device
+            device.connection = self.connection
+
+            def enumerateSessions():
+                """
                     We pass this function to the reactor to call later and grab
                     a list of active Sessions from the Agent.
 
                     We define this here to capture the outer scope temporarily.
                     """
 
-                    device.enumerateSessions()
+                device.enumerateSessions()
 
-                reactor.callLater(1.0, enumerateSessions)
-                
-                self.__logger.info("accepted connection from " + device.device_id)
-                return SystemResponseFactory.bound(device)\
-                    .inReplyTo(message)\
-                    .build()
-            else:
-                return SystemResponseFactory\
-                    .error(Message.SystemResponse.BOUND, "error binding")\
+            reactor.callLater(1.0, enumerateSessions)
+
+            self.__logger.info(f"accepted connection from {device.device_id}")
+            return SystemResponseFactory.bound(device)\
                     .inReplyTo(message)\
                     .build()
         else:
             return SystemResponseFactory\
-                .error(Message.SystemResponse.BOUND, "no device specified")\
-                .inReplyTo(message)\
-                .build()
+                    .error(Message.SystemResponse.BOUND, "error binding")\
+                    .inReplyTo(message)\
+                    .build()
     
     def listDevices(self, message):
         """
@@ -95,21 +94,22 @@ class SystemRequestHandler(handlers.SystemRequestHandler):
         Device.
         """
 
-        if message.system_request.HasField('device'):
-            device = Devices.getFromProtobuf(message.system_request.device)
-
-            if device is not None:
-                return device.startSession(self.connection, message)
-            else:
-                return SystemResponseFactory\
-                    .error(Message.SystemResponse.SESSION_ID, "unknown device")\
+        if not message.system_request.HasField('device'):
+            return SystemResponseFactory\
+                    .error(Message.SystemResponse.SESSION_ID, "no device")\
                     .inReplyTo(message)\
                     .build()
-        else:
-            return SystemResponseFactory\
-                .error(Message.SystemResponse.SESSION_ID, "no device")\
-                .inReplyTo(message)\
-                .build()
+        device = Devices.getFromProtobuf(message.system_request.device)
+
+        return (
+            device.startSession(self.connection, message)
+            if device is not None
+            else SystemResponseFactory.error(
+                Message.SystemResponse.SESSION_ID, "unknown device"
+            )
+            .inReplyTo(message)
+            .build()
+        )
     
     def stopSession(self, message):
         """
@@ -122,9 +122,9 @@ class SystemRequestHandler(handlers.SystemRequestHandler):
             return session.device.stopSession(self.connection, session, message)
         else:
             return SystemResponseFactory\
-            .error(Message.SystemResponse.SESSION_ID, "unknown session")\
-            .inReplyTo(message)\
-            .build()
+                .error(Message.SystemResponse.SESSION_ID, "unknown session")\
+                .inReplyTo(message)\
+                .build()
     
     def unbindDevice(self, message):
         """
@@ -135,22 +135,20 @@ class SystemRequestHandler(handlers.SystemRequestHandler):
         request.
         """
 
-        if message.system_request.HasField('device'):
-            device = Devices.removeFromProtobuf(message.system_request.device)
-            
-            self.connection.device = None
-            device.connection = None
-            
-            if(device not in Devices):
-                return SystemResponseFactory\
-                    .unbound(device)\
-                    .inReplyTo(message)\
-                    .build()
-            else:
-                return SystemResponseFactory\
-                    .error(Message.SystemResponse.UNBOUND, "error unbinding")\
-                    .inReplyTo(message)\
-                    .build()
-        else:
+        if not message.system_request.HasField('device'):
             raise Exception("UNBIND_DEVICE request does not specify a device")
+        device = Devices.removeFromProtobuf(message.system_request.device)
+
+        self.connection.device = None
+        device.connection = None
+
+        return (
+            SystemResponseFactory.unbound(device).inReplyTo(message).build()
+            if (device not in Devices)
+            else SystemResponseFactory.error(
+                Message.SystemResponse.UNBOUND, "error unbinding"
+            )
+            .inReplyTo(message)
+            .build()
+        )
         

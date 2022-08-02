@@ -97,41 +97,38 @@ class Cmd(cmd.Cmd):
         Otherwise try to call complete_<command> to get list of completions.
         """
 
-        if state == 0:
-            if "readline" in sys.modules:
-                origline = readline.get_line_buffer()
-                line = origline.lstrip()
-                stripped = len(origline) - len(line)
-                begidx = readline.get_begidx() - stripped
-                endidx = readline.get_endidx() - stripped
-    
-                if begidx > 0:
-                    if ">" in line and begidx > line.index(">"):
-                        self.completion_matches = self.completefilename(text, line, begidx, endidx)
-                        return self.completion_matches[0]
-                        
-                    command = self.parseline(line)[0]
-                    if command == '':
-                        compfunc = self.completedefault
-                    else:
-                        try:
-                            compfunc = getattr(self, 'complete_' + command)
-                        except AttributeError:
-                            compfunc = self.completedefault
-                else:
-                    compfunc = self.completenames
+        if state == 0 and "readline" in sys.modules:
+            origline = readline.get_line_buffer()
+            line = origline.lstrip()
+            stripped = len(origline) - len(line)
+            begidx = readline.get_begidx() - stripped
+            endidx = readline.get_endidx() - stripped
 
-                matches = compfunc(text, line, begidx, endidx)
-                if len(matches) == 1 and matches[0].endswith(os.path.sep):
-                    self.completion_matches = matches
+            if begidx > 0:
+                if ">" in line and begidx > line.index(">"):
+                    self.completion_matches = self.completefilename(text, line, begidx, endidx)
+                    return self.completion_matches[0]
+
+                command = self.parseline(line)[0]
+                if command == '':
+                    compfunc = self.completedefault
                 else:
-                    self.completion_matches = map(lambda s: s+" ", matches)
-                
+                    try:
+                        compfunc = getattr(self, f'complete_{command}')
+                    except AttributeError:
+                        compfunc = self.completedefault
+            else:
+                compfunc = self.completenames
+
+            matches = compfunc(text, line, begidx, endidx)
+            if len(matches) == 1 and matches[0].endswith(os.path.sep):
+                self.completion_matches = matches
+            else:
+                self.completion_matches = map(lambda s: f"{s} ", matches)
+
         try:
             return self.completion_matches[state]
-        except IndexError:
-            return None
-        except TypeError:
+        except (IndexError, TypeError):
             return None
 
     def completefilename(self, text, line, begidx, endidx):
@@ -151,7 +148,7 @@ class Cmd(cmd.Cmd):
         argv = shlex.split(line)
 
         if argv[0] in self.aliases:
-            getattr(self, "do_" + self.aliases[argv[0]])(" ".join(argv[1:]))
+            getattr(self, f"do_{self.aliases[argv[0]]}")(" ".join(argv[1:]))
         else:
             cmd.Cmd.default(self, line)
             
@@ -265,28 +262,28 @@ class Cmd(cmd.Cmd):
             self.__completer_stack.append(readline.get_completer())
             readline.set_completer(completer)
             readline.set_completer_delims(readline.get_completer_delims().replace("/", ""))
-            
+
             if len(self.__history_stack) > 0 and self.__history_stack[-1]:
                 readline.write_history_file(self.__history_stack[-1])
-                
+
             self.__history_stack.append(history_file)
             readline.clear_history()
             if history_file != None and os.path.exists(history_file):
                 readline.read_history_file(history_file)
-                
-            readline.parse_and_bind(self.completekey + ": complete")
+
+            readline.parse_and_bind(f"{self.completekey}: complete")
     
     def pop_completer(self):
         if "readline" in sys.modules:
-            if self.__history_stack[-1] != None:
-                readline.write_history_file(self.__history_stack.pop())
-            else:
+            if self.__history_stack[-1] is None:
                 self.__history_stack.pop()
-            
+
+            else:
+                readline.write_history_file(self.__history_stack.pop())
             readline.clear_history()
             if len(self.__history_stack) > 0 and self.__history_stack[-1]:
                 readline.read_history_file(self.__history_stack[-1])
-                
+
             readline.set_completer(self.__completer_stack.pop())
 
     def __build_tee(self, console, destination):
@@ -313,8 +310,8 @@ class Cmd(cmd.Cmd):
 
         # perform any arbitrary variable substitutions, from the dictionary
         for name in self.variables:
-            line = line.replace("$%s" % name, self.variables[name])
-        
+            line = line.replace(f"${name}", self.variables[name])
+
         # perform special variable substitutions, referencing the previous command
         if line.find("!!") >= 0 or line.find("!$") >= 0 or line.find("!^") >= 0 or line.find("!*") >= 0:
             line = self.__do_last_command_substitutions(line)
@@ -324,7 +321,7 @@ class Cmd(cmd.Cmd):
     def __do_last_command_substitutions(self, line):
         if self.lastcmd != "":
             argv = shlex.split(self.lastcmd)
-            
+
             line = line.replace("!!", self.lastcmd)
             line = line.replace("!$", argv[-1])
             line = line.replace("!^", argv[1])
@@ -341,7 +338,7 @@ class Cmd(cmd.Cmd):
         Set up output redirection, by building a Tee between stdout and the
         specified file.
         """
-        
+
         (line, destination) = line.rsplit(">", 1)
 
         if len(destination) > 0:
@@ -349,7 +346,11 @@ class Cmd(cmd.Cmd):
                 self.__output_redirected = self.stdout
                 self.stdout = self.__build_tee(self.stdout, destination)
             except IOError as e:
-                self.stderr.write("Error processing your redirection target: " + e.strerror + ".e\n")
+                self.stderr.write(
+                    f"Error processing your redirection target: {e.strerror}"
+                    + ".e\n"
+                )
+
                 return ""
         else:
             self.stderr.write("No redirection target specified.\n")

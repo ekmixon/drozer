@@ -50,9 +50,7 @@ class ReflectionRequestFactory:
         Helper method to build a DELETE_ALL request, to clear the ObjectStore.
         """
 
-        builder = ReflectionRequestFactory(Message.ReflectionRequest.DELETE_ALL)
-        
-        return builder
+        return ReflectionRequestFactory(Message.ReflectionRequest.DELETE_ALL)
 
     def getId(self):
         """

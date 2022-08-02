@@ -18,22 +18,32 @@ class Configuration(object):
         """
         Fetch an executable, could be bundled in the lib, specified in the configuration, or attempt to find it on the PATH
         """
-        
-  
+
+      
 
         #check the library
         path = cls.library(name)
 
         #is the required exe available on the PATH?
-        if path == None and cls.get("executables", name) == None:
+        if path is None and cls.get("executables", name) is None:
             path = system.which(name)
-        
-        if path == None:
+
+        if path is None:
             path = cls.get("executables", name)
-        
-        if path == None or path == "":
-            sys.stderr.write("Could not find %s. Please ensure that it is installed and on your PATH.\n\nIf this error persists, specify the path in the ~/.drozer_config file:\n\n    [executables]\n    %s = %s\n" % (name, name, platform.system() == "Windows" and "C:\\path\\to\\" + name or "/path/to/" + name))
-            
+
+        if path is None or path == "":
+            sys.stderr.write(
+                "Could not find %s. Please ensure that it is installed and on your PATH.\n\nIf this error persists, specify the path in the ~/.drozer_config file:\n\n    [executables]\n    %s = %s\n"
+                % (
+                    name,
+                    name,
+                    platform.system() == "Windows"
+                    and "C:\\path\\to\\" + name
+                    or f"/path/to/{name}",
+                )
+            )
+
+
         return path
     
     @classmethod
@@ -52,9 +62,9 @@ class Configuration(object):
         """
         Returns a single configuration value.
         """
-        
+
         cls.__ensure_config()
-        
+
         try:
             if cls.__config.has_section(section):
                 return cls.__config.get(section, key)
@@ -68,9 +78,9 @@ class Configuration(object):
         """
         Returns all keys from a section of the configuration file.
         """
-        
+
         cls.__ensure_config()
-        
+
         if cls.__config.has_section(section):
             return cls.__config.options(section)
         else:
@@ -81,9 +91,9 @@ class Configuration(object):
         """
         Returns all values from a section of the configuration file.
         """
-        
+
         cls.__ensure_config()
-        
+
         if cls.__config.has_section(section):
             return map(lambda k: cls.__config.get(section, k), cls.__config.options(section))
         else:
@@ -104,20 +114,17 @@ class Configuration(object):
         """
         Returns the path to a drozer Library
         """
-        
+
         path = os.path.join(os.path.dirname(__file__), "lib", name)
-        
-        if os.path.exists(path):
-            return path
-        else:
-            return None
+
+        return path if os.path.exists(path) else None
         
     @classmethod
     def path(cls):
         """
         Returns the path to the configuration file.
         """
-        
+
         if os.path.exists(os.path.sep.join([".", ".drozer_config"])):
             return os.path.sep.join([".", ".drozer_config"])
         else:
@@ -143,11 +150,11 @@ class Configuration(object):
         """
         Loads the configuration from file, if it has not already been loaded.
         """
-        
-        if cls.__config == None:
+
+        if cls.__config is None:
             cls.__config = ConfigParser.SafeConfigParser()
             cls.__config.optionxform = lambda optionstr: optionstr.replace(":", "|")
-            
+
             if os.path.exists(cls.path()):
                 cls.__config.read(cls.path())
                 

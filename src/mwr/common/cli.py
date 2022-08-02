@@ -33,10 +33,10 @@ class Base(object):
         """
         Ask the user to select from a list of options. 
         """
-        
-        while(True):
-            selection = self.ask("%s [%s] " % (prompt, "".join(options)))
-            
+
+        while True:
+            selection = self.ask(f'{prompt} [{"".join(options)}] ')
+
             if selection in options:
                 return selection
     
@@ -58,15 +58,15 @@ class Base(object):
         args, unknown = self._parser.parse_known_args(arguments)
         self._parser.print_help = parser_print_help
         self._parser.exit = parser_exit
-        
+
         return (args, unknown)
     
     def prepare_argument_parser(self, argv):
         # try to find the command, before we invoke the parser so we can add additional arguments
-        command_argv = filter(lambda a: "do_" + a in self.__commands(), argv)
-        
-        if(len(command_argv) == 1 and hasattr(self, "args_for_" + command_argv[0])):
-            getattr(self, "args_for_" + command_argv[0])()
+        command_argv = filter(lambda a: f"do_{a}" in self.__commands(), argv)
+
+        if len(command_argv) == 1 and hasattr(self, f"args_for_{command_argv[0]}"):
+            getattr(self, f"args_for_{command_argv[0]}")()
         if hasattr(self, "before_parse_args"):
             self.before_parse_args(argv)
         
@@ -76,9 +76,9 @@ class Base(object):
         parses the command-line arguments, and invokes an appropriate handler.
         """
 
-        if argv == None:
+        if argv is None:
             argv = []
-        
+
         self.prepare_argument_parser(argv)
         # parse argv into arguments using the generated ArgumentParser
         arguments = self.parse_arguments(self._parser, argv)
@@ -118,12 +118,13 @@ class Base(object):
         Produce a piece of text, containing the available commands, and their short
         description.
         """
-        
-        commands = {}
-        
-        for command in self.__commands():
-            commands[command.replace("do_", "")] = getattr(self, command).__doc__.strip()
-            
+
+        commands = {
+            command.replace("do_", ""): getattr(self, command).__doc__.strip()
+            for command in self.__commands()
+        }
+
+
         return console.format_dict(commands, left_margin=2)
 
     def __invokeCommand(self, arguments):
@@ -134,10 +135,10 @@ class Base(object):
         try:
             command = arguments.command
 
-            if "do_" + command in dir(self):
-                getattr(self, "do_" + command)(arguments)
+            if f"do_{command}" in dir(self):
+                getattr(self, f"do_{command}")(arguments)
             else:
-                raise UsageError("unknown command: " + command)
+                raise UsageError(f"unknown command: {command}")
         except IndexError:
             raise UsageError("incorrect usage")
         

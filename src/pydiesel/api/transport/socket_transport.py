@@ -39,11 +39,8 @@ class SocketTransport(Transport):
 
         try:
             frame = Frame.readFromSocket(self.__socket)
-    
-            if frame is not None:
-                return frame.message()
-            else:
-                return None
+
+            return frame.message() if frame is not None else None
         except socket.timeout as e:
             raise ConnectionError(e)
         except ssl.SSLError as e:
@@ -77,10 +74,10 @@ class SocketTransport(Transport):
 
         message_id = self.send(message)
 
-        while(True):
+        while True:
             response = self.receive()
 
-            if response == None:
+            if response is None:
                 raise ConnectionError(RuntimeError('Received an empty response from the Agent.'))
             elif response.id == message_id:
                 return response
@@ -111,6 +108,6 @@ class SocketTransport(Transport):
         else:
             host = endpoint
             port = self.DefaultPort
-        
+
         return (host, int(port))
             

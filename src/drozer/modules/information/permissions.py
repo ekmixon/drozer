@@ -35,14 +35,14 @@ class Permissions(Module, common.PackageManager):
         else:
 
             permissionList = []
-            
+
             # Iterate through each package and get unique permissions
             for package in self.packageManager().getPackages(common.PackageManager.GET_PERMISSIONS):
                     if package.requestedPermissions != None:
                         for permission in package.requestedPermissions:
                             if permission not in permissionList:
                                 permissionList.append(str(permission))
-            
+
             # Print sorted
             for permission in sorted(permissionList):
 
@@ -80,11 +80,11 @@ class Permissions(Module, common.PackageManager):
             else:
                 for k, v in sorted(self.__protectionLevels.items()):
                     if (pl & k == k):
-                        plHumanReadable += v + "|"
-                    
+                        plHumanReadable += f"{v}|"
+
                 plHumanReadable = plHumanReadable.strip("|")
 
-            return str(pl) + " - " + plHumanReadable
+            return f"{str(pl)} - {plHumanReadable}"
 
         except:
             return "Unable to retrieve protectionLevel"

@@ -38,16 +38,16 @@ class HTTPMessage:
     def __init__(self, headers=None, body=None):
         """
         Create an HTTP Message
-        """        
-        
+        """    
+
         self.headers = headers
         self.body = body
-        
-        if self.headers == None:
+
+        if self.headers is None:
             self.headers = {}
     
     def format_headers(self):
-        return "\r\n".join(map(lambda k: "%s: %s" % (k,self.headers[k]), self.headers))
+        return "\r\n".join(map(lambda k: f"{k}: {self.headers[k]}", self.headers))
 
 
 class HTTPRequest(HTTPMessage):
@@ -68,7 +68,7 @@ class HTTPRequest(HTTPMessage):
         Read the HTTP headers (terminated by a double-CRLF)
         """
         headers = ""
-        
+
         bytes_read = 0
         while bytes_read != -1:
             pLength = len(headers)
@@ -76,23 +76,18 @@ class HTTPRequest(HTTPMessage):
             bytes_read = (len(headers) - pLength) -1
             if str(headers).endswith("\r\n\r\n"):
                 return headers
-            
+
         return None
 
     @classmethod
     def processHeader(cls, request):
-        headers = []
-        
         lines = str(request.strip()).rsplit("\r\n")
-        if len(lines) < 1:
+        if not lines:
             return None
-        
+
         # extract the verb, resource and version from the first line        
         verb, resource, version = cls.processRequest(lines[0])
-        # then parse the remainder of the request for headers
-        for line in lines[1:]:
-            headers.append(line.split(": "))
-        
+        headers = [line.split(": ") for line in lines[1:]]
         # formulate an HTTP message
         return HTTPRequest(verb, resource, version, dict(headers), None)
     
@@ -101,11 +96,11 @@ class HTTPRequest(HTTPMessage):
         """
         Read an HTTP request.
         """
-        
+
         slice1 = line.index(" ")
         slice2 = line.rindex(" ")
-        
-        return (line[0:slice1], line[slice1+1:slice2], line[slice2+1:])
+
+        return line[:slice1], line[slice1+1:slice2], line[slice2+1:]
 
     @classmethod
     def contentPresent(cls, message):
@@ -129,34 +124,33 @@ class HTTPRequest(HTTPMessage):
         position = stream.tell()
         message = None
         header = HTTPRequest.readHeaders(stream)
-        
-        if header == None:
+
+        if header is None:
             stream.seek(position)
         else:
             message = HTTPRequest.processHeader(header)
 
-        if message == None:
+        if message is None:
             return None
-        else:
-            if "Content-Length" in message.headers:
-                length = int(message.headers["Content-Length"])
-                if length > 0:
-                    body = stream.read(length)
-                    if len(body) >= length:
-                        message.body = body
-                    else:
-                        stream.seek(position)
-                        
-                        return None
-            return message
+        if "Content-Length" in message.headers:
+            length = int(message.headers["Content-Length"])
+            if length > 0:
+                body = stream.read(length)
+                if len(body) >= length:
+                    message.body = body
+                else:
+                    stream.seek(position)
+
+                    return None
+        return message
     
     def writeTo(self, socket):
         request_data = str(self)
         sent = 0
-        
+
         while sent < len(request_data):
             sent += socket.send(request_data[sent:])
-        
+
         return sent
     
     def __str__(self):
@@ -188,8 +182,8 @@ class HTTPResponse(HTTPMessage):
         """
         Read headers from an HTTP response.
         """
-        
-        return dict(map(lambda l: [l[0:l.index(": ")], l[l.index(": ")+2:]], lines))
+
+        return dict(map(lambda l: [l[:l.index(": ")], l[l.index(": ")+2:]], lines))
     
     @classmethod
     def processResponse(cls, line):
@@ -206,15 +200,15 @@ class HTTPResponse(HTTPMessage):
         """
         Try to read an HTTP Response from a Socket
         """
-        
+
         resp = ""
-        
-        while resp.find("\r\n\r\n") == -1:
+
+        while "\r\n\r\n" not in resp:
             resp += socket.recv(10)
-            
+
             if len(resp) == 0:
                 return None
-        
+
         return HTTPResponse.parse(resp)
     
     def status_text(self):
@@ -261,7 +255,7 @@ class HTTPResponse(HTTPMessage):
                  505: "HTTP Version Not Supported" }[self.status]
     
     def __str__(self):
-        if self.body == None:
+        if self.body is None:
             return "%s %d %s\r\n%s\r\n\r\n" % (self.version, self.status, self.status_text(), self.format_headers())
         else:
             return "%s %d %s\r\n%s\r\n\r\n%s" % (self.version, self.status, self.status_text(), self.format_headers(), self.body)

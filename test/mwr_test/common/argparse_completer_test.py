@@ -39,13 +39,13 @@ class ArgumentParserCompleterTestCase(unittest.TestCase):
         self.parser.add_argument("--one", nargs=1)
         self.parser.add_argument("--two", nargs=2)
         self.parser.add_argument("--three", nargs=3)
-        
+
         suggestions = argparse_completer\
-            .ArgumentParserCompleter(self.parser, self)\
-            .get_suggestions("", "--two 1 2 ", 10, 10)
-        
+                .ArgumentParserCompleter(self.parser, self)\
+                .get_suggestions("", "--two 1 2 ", 10, 10)
+
         assert suggestions == ["--one", "--two", "--three"], suggestions
-        assert self.suggestions_for == None
+        assert self.suggestions_for is None
         
     def testItShouldPassTheIdWhenCompletingTheNthArg(self):
         self.parser.add_argument("--one", nargs=1)

@@ -31,10 +31,7 @@ class MockCache:
         self.files = cache
 
     def listFiles(self):
-        if self.files is None:
-            return []
-        else:    
-            return self.files
+        return [] if self.files is None else self.files
 
 
 class MockFile:

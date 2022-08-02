@@ -28,10 +28,13 @@ class ReflectedArrayTestCase(unittest.TestCase):
         assert 3 in self.a1
 
     def testItShouldShowAReflectedTypeIsNotInTheArray(self):
-        assert not reflection.types.ReflectedPrimitive.fromNative(7, reflector=None) in self.a1
+        assert (
+            reflection.types.ReflectedPrimitive.fromNative(7, reflector=None)
+            not in self.a1
+        )
 
     def testItShouldShowANativeTypeIsNotInTheArray(self):
-        assert not 7 in self.a1
+        assert 7 not in self.a1
 
     def testItShouldDeleteAnItemFromTheArray(self):
         del self.a1[0]
@@ -50,10 +53,10 @@ class ReflectedArrayTestCase(unittest.TestCase):
         assert self.a1 == [1, 2, 3, 4, 5]
 
     def testItShouldShowAReflectedArrayIsNotEqualToAnother(self):
-        assert not self.a1 == self.a2
+        assert self.a1 != self.a2
 
     def testItShouldShowAReflectedArrayIsNotEqualToANativeOne(self):
-        assert not self.a1 == [6, 7, 8, 9, 10]
+        assert self.a1 != [6, 7, 8, 9, 10]
 
     def testItShouldGetAnItemFromTheArray(self):
         assert self.a1[0] == 1
@@ -64,10 +67,7 @@ class ReflectedArrayTestCase(unittest.TestCase):
         assert self.a1[2:4] == [3, 4]
 
     def testItShouldIterateThroughTheArray(self):
-        s1 = ""
-
-        for i in self.a1:
-            s1 += str(i)
+        s1 = "".join(str(i) for i in self.a1)
 
         assert s1 == "12345"
 
@@ -87,10 +87,10 @@ class ReflectedArrayTestCase(unittest.TestCase):
         assert self.a1 != [6, 7, 8, 9, 10]
 
     def testItShouldShowAReflectedArrayIsNotNotEqualToAnother(self):
-        assert not self.a1 != reflection.types.ReflectedArray([1, 2, 3, 4, 5])
+        assert self.a1 == reflection.types.ReflectedArray([1, 2, 3, 4, 5])
 
     def testItShouldShowAReflectedArrayIsNotNotEqualToANativeOne(self):
-        assert not self.a1 != [1, 2, 3, 4, 5]
+        assert self.a1 == [1, 2, 3, 4, 5]
 
     def testItShouldReduceElementsOfTheArray(self):
         assert reduce(lambda x,y: x+y, self.a1) == 15

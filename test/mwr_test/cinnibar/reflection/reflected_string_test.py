@@ -32,7 +32,7 @@ class ReflectedStringTestCase(unittest.TestCase):
         s1 = reflection.types.ReflectedString("Hello World")
         s2 = reflection.types.ReflectedString("Fred")
 
-        assert not s2 in s1
+        assert s2 not in s1
 
     def testItShouldShowAReflectedStringContainsANativeString(self):
         s1 = reflection.types.ReflectedString("Hello World")
@@ -42,9 +42,7 @@ class ReflectedStringTestCase(unittest.TestCase):
 
     def testItShouldShowAReflectedStringDoesNotContainANativeString(self):
         s1 = reflection.types.ReflectedString("Hello World")
-        s2 = "Fred"
-
-        assert not s2 in s1
+        assert "Fred" not in s1
 
     def testItShouldEqualAReflectedString(self):
         s1 = reflection.types.ReflectedString("Hello")

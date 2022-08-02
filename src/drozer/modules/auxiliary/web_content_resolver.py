@@ -80,26 +80,46 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(self.header + self.__format_exception(e) + self.footer)
     
     def __eligible_path_permission(self, permissions, path):
-        return permissions == None or \
-            permissions.lower() == "null" and (path.getReadPermission() == None or path.getWritePermission() == None) or \
-            path.getReadPermission() != None and permissions.lower() in path.getReadPermission().lower() or \
-            path.getWritePermission() != None and permissions.lower() in path.getWritePermission().lower()
+        return (
+            permissions is None
+            or permissions.lower() == "null"
+            and (
+                path.getReadPermission() is None
+                or path.getWritePermission() is None
+            )
+            or path.getReadPermission() != None
+            and permissions.lower() in path.getReadPermission().lower()
+            or path.getWritePermission() != None
+            and permissions.lower() in path.getWritePermission().lower()
+        )
              
     def __eligible_provider(self, permissions, provider):
-        return permissions == None or \
-            permissions.lower() == "null" and (provider.readPermission == None or provider.writePermission == None) or \
-            provider.readPermission != None and permissions.lower() in provider.readPermission.lower() or \
-            provider.writePermission != None and permissions.lower() in provider.writePermission.lower() or \
-            provider.pathPermissions != None and True in map(lambda path: self.__eligible_path_permission(permissions, path), provider.pathPermissions)
+        return (
+            permissions is None
+            or permissions.lower() == "null"
+            and (
+                provider.readPermission is None or provider.writePermission is None
+            )
+            or provider.readPermission != None
+            and permissions.lower() in provider.readPermission.lower()
+            or provider.writePermission != None
+            and permissions.lower() in provider.writePermission.lower()
+            or provider.pathPermissions != None
+            and True
+            in map(
+                lambda path: self.__eligible_path_permission(permissions, path),
+                provider.pathPermissions,
+            )
+        )
 
     def __format_exception(self, e):
-        return "<h1>" + str(e.__class__) + "</h1><p>" + e.message + "</p>"
+        return f"<h1>{str(e.__class__)}</h1><p>{e.message}</p>"
 
     def __provider_list(self, filters=None, permissions=None):
         """
         Print out a (filtered) list of Content Providers.
         """
-        
+
         output = """<table><tr><th>Package</th>
                                <th colspan="2">Authorities</th>
                                <th>Read permission</th>
@@ -111,34 +131,41 @@ class Handler(BaseHTTPRequestHandler):
             return "<a href='%s'>%s</a>" % (path, display)
 
         def linkcontent(url, display=None):
-            return link("/query?uri=content://%s&projection=&selection=&selectionSort=" % url, display or url)
+            return link(
+                f"/query?uri=content://{url}&projection=&selection=&selectionSort=",
+                display or url,
+            )
+
 
         def linkfilter(url, display=None):
-            return link("/?filter=%s" % url, display or url)
+            return link(f"/?filter={url}", display or url)
 
         def linkperm(url, display=None):
-            return link("/?permissions=%s" % url, display or url)
+            return link(f"/?permissions={url}", display or url)
 
         for package in self.module.packageManager().getPackages(common.PackageManager.GET_PROVIDERS):
-            if package.providers != None and (filters == None or filters.lower() in package.packageName.lower()):
+            if package.providers != None and (
+                filters is None or filters.lower() in package.packageName.lower()
+            ):
                 for provider in package.providers:
 
                     if self.__eligible_provider(permissions, provider):
                         # Give the general values first
                         authorities = provider.authority.split(";")
-                        output += "<tr><td>%s</td>" % linkfilter(provider.packageName)
+                        output += f"<tr><td>{linkfilter(provider.packageName)}</td>"
                         output += "<td colspan='2'>%s</td>" % "<br/>".join([linkcontent(a) for a in authorities])
-                        output += "<td>%s</td>" % linkperm(provider.readPermission)
-                        output += "<td>%s</td>" % linkperm(provider.writePermission)
-                        output += "<td>%s</td></tr>" % provider.multiprocess
+                        output += f"<td>{linkperm(provider.readPermission)}</td>"
+                        output += f"<td>{linkperm(provider.writePermission)}</td>"
+                        output += f"<td>{provider.multiprocess}</td></tr>"
 
                         if provider.pathPermissions != None:
                             for permission in provider.pathPermissions:
                                 if self.__eligible_path_permission(permissions, permission):
                                     output += "<tr><td>&nbsp;</td><td>&nbsp;</td>"
-                                    output += "<td>%s</td>" % linkcontent("%s%s" % (authorities[0], permission.getPath()), permission.getPath())
-                                    output += "<td>%s</td>" % linkperm(permission.getReadPermission())
-                                    output += "<td>%s</td>" % linkperm(permission.getWritePermission())
+                                    output += f'<td>{linkcontent(f"{authorities[0]}{permission.getPath()}", permission.getPath())}</td>'
+
+                                    output += f"<td>{linkperm(permission.getReadPermission())}</td>"
+                                    output += f"<td>{linkperm(permission.getWritePermission())}</td>"
                                     output += "<td>&nbsp;</td></tr>"
         output += "</table>"
         return output
@@ -148,29 +175,28 @@ class Handler(BaseHTTPRequestHandler):
         Query a Content Provider, with a projection and selection passed through the
         web interface.
         """
-        
+
         cursor = self.module.contentResolver().query(uri, projection != None and projection.split(",") or None, selection, selectionArgs != None and selectionArgs.split(",") or None, sortOrder)
+        if cursor is None:
+            return f"Unable to query {uri}."
+        rows = self.module.getResultSet(cursor)
+
         output = "<table><thead><tr>"
 
-        if cursor != None:
-            rows = self.module.getResultSet(cursor)
+        for v in rows[0]:
+            output += f"<th>{v}</th>"
 
-            for v in rows[0]:
-                output += "<th>%s</th>" % v
-            
-            output += "</tr></thead><tbody>"
-            
-            for r in rows[1:]:
-                output += "<tr>"
-                for v in r:
-                    output += "<td>%s</td>" % v
-                output += "</tr>"
+        output += "</tr></thead><tbody>"
 
-            output += "</tbody></table>"
-            
-            return output
-        else:
-            return "Unable to query %s." % uri
+        for r in rows[1:]:
+            output += "<tr>"
+            for v in r:
+                output += f"<td>{v}</td>"
+            output += "</tr>"
+
+        output += "</tbody></table>"
+
+        return output
 
     def usage(self):
         """

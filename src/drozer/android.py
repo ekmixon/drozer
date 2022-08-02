@@ -321,13 +321,13 @@ optional arguments:
         """
         Provide completion suggestions for Android Intents.
         """
-        
+
+        if action.dest == "component":
+            return
         if action.dest == "action":
             return cls.actions
         elif action.dest == "category":
             return cls.categories
-        elif action.dest == "component":
-            pass
         elif action.dest == "data_uri":
             pass
         elif action.dest == "extras":
@@ -337,8 +337,6 @@ optional arguments:
                 return cls.extra_keys
         elif action.dest == "flags":
             return cls.flags.keys()
-        elif action.dest == "mimetype":
-            pass
 
     def buildIn(self, module):
         """
@@ -406,38 +404,39 @@ optional arguments:
         """
         Set the EXTRAS of intent, iff we have a value to set.
         """
-        
-        if self.extras != None:
-            extras = context.new("android.os.Bundle")
 
-            for extra in self.extras:
-                if extra[0] == "boolean":
-                    extras.putBoolean(extra[1], context.arg(extra[2].lower().startswith("t"), obj_type="boolean"))
-                elif extra[0] == "byte":
-                    extras.putByte(extra[1], context.arg(int(extra[2]), obj_type="byte"))
-                elif extra[0] == "char":
-                    extras.putChar(extra[1], context.arg(int(extra[2]), obj_type="char"))
-                elif extra[0] == "double":
-                    extras.putDouble(extra[1], context.arg(float(extra[2]), obj_type="double"))
-                elif extra[0] == "float":
-                    extras.putFloat(extra[1], context.arg(float(extra[2]), obj_type="float"))
-                elif extra[0] == "integer":
-                    extras.putInt(extra[1], context.arg(int(extra[2]), obj_type="int"))
-                elif extra[0] == "long":
-                    extras.putLong(extra[1], context.arg(long(extra[2]), obj_type="long"))
-                elif extra[0] == "short":
-                    extras.putShort(extra[1], context.arg(int(extra[2]), obj_type="short"))
-                elif extra[0] == "bytearray":
-                    wrapper = context.new("java.io.ByteArrayOutputStream")
-                    for i in map(ord,extra[2]):
-                        wrapper.write(i)
-                    extras.putByteArray(extra[1],wrapper.toByteArray())
-                elif extra[0] == "string":
-                    extras.putString(extra[1], extra[2])
-                else:
-                    extras.putParcelable(extra[1], extra[2])
+        if self.extras is None:
+            return
+        extras = context.new("android.os.Bundle")
 
-            intent.putExtras(extras)
+        for extra in self.extras:
+            if extra[0] == "boolean":
+                extras.putBoolean(extra[1], context.arg(extra[2].lower().startswith("t"), obj_type="boolean"))
+            elif extra[0] == "byte":
+                extras.putByte(extra[1], context.arg(int(extra[2]), obj_type="byte"))
+            elif extra[0] == "char":
+                extras.putChar(extra[1], context.arg(int(extra[2]), obj_type="char"))
+            elif extra[0] == "double":
+                extras.putDouble(extra[1], context.arg(float(extra[2]), obj_type="double"))
+            elif extra[0] == "float":
+                extras.putFloat(extra[1], context.arg(float(extra[2]), obj_type="float"))
+            elif extra[0] == "integer":
+                extras.putInt(extra[1], context.arg(int(extra[2]), obj_type="int"))
+            elif extra[0] == "long":
+                extras.putLong(extra[1], context.arg(long(extra[2]), obj_type="long"))
+            elif extra[0] == "short":
+                extras.putShort(extra[1], context.arg(int(extra[2]), obj_type="short"))
+            elif extra[0] == "bytearray":
+                wrapper = context.new("java.io.ByteArrayOutputStream")
+                for i in map(ord,extra[2]):
+                    wrapper.write(i)
+                extras.putByteArray(extra[1],wrapper.toByteArray())
+            elif extra[0] == "string":
+                extras.putString(extra[1], extra[2])
+            else:
+                extras.putParcelable(extra[1], extra[2])
+
+        intent.putExtras(extras)
             
     def __add_flags_to(self, intent, context):
         """

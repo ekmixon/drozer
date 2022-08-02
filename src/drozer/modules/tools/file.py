@@ -16,7 +16,7 @@ class Download(Module, common.ClassLoader, common.FileSystem):
 
     def execute(self, arguments):
         length = self.downloadFile(arguments.source, arguments.destination)
-        
+
         if length != None:
             self.stdout.write("Read %d bytes\n" % length)
         else:
@@ -44,13 +44,13 @@ class Size(Module, common.FileSystem):
     def execute(self, arguments):
         size = self.fileSize(arguments.target)
 
-        if size != None:
-            if size > 1024:
-                self.stdout.write("%s (%d bytes)\n" % (self.format_file_size(size), size))
-            else:
-                self.stdout.write("%s\n" % (self.format_file_size(size)))
-        else:
+        if size is None:
             self.stderr.write("Could not determine file size. The file may not exist.\n")
+
+        elif size > 1024:
+            self.stdout.write("%s (%d bytes)\n" % (self.format_file_size(size), size))
+        else:
+            self.stdout.write("%s\n" % (self.format_file_size(size)))
 
     def get_completion_suggestions(self, action, text, **kwargs):
         if action.dest == "target":

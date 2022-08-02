@@ -37,15 +37,15 @@ class RepositoryBuilderTestCase(unittest.TestCase):
     
     def testItShouldBuildAModuleRepositoryWithPackage(self):
         fs.touch("./tmp/a/local/.mercury_package")
-        
+
         RepositoryBuilder("./tmp", "./repo").build()
-        
+
         assert os.path.exists("./repo")
         assert os.path.exists("./repo/INDEX.xml")
         assert os.path.exists("./repo/a.local")
-        
+
         assert "a.local" in fs.read("./repo/INDEX.xml")
-        assert fs.read("./repo/a.local")[0:4] == "\x50\x4b\x03\x04"
+        assert fs.read("./repo/a.local")[:4] == "\x50\x4b\x03\x04"
 
     
 def RepositoryBuilderTestSuite():

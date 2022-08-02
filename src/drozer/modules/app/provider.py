@@ -23,13 +23,14 @@ class Columns(Module, common.Provider, common.TableFormatter):
     def execute(self, arguments):
         c = self.contentResolver().query(arguments.uri)
 
-        if c != None:
+        if c is None:
+            self.stderr.write("Unable to get columns from %s\n"%arguments.uri)
+
+        else:
             columns = c.getColumnNames()
             c.close();
 
             self.print_table([columns])
-        else:
-            self.stderr.write("Unable to get columns from %s\n"%arguments.uri)
 
 class Delete(Module, common.Provider):
 
@@ -76,14 +77,12 @@ class Download(Module, common.Provider):
 
     def execute(self, arguments):
         data = self.contentResolver().read(arguments.uri)
-        
+
         if os.path.isdir(arguments.destination):
             arguments.destination = os.path.sep.join([arguments.destination, arguments.uri.split("/")[-1]])
-        
-        output = open(arguments.destination, 'w')
-        output.write(str(data))
-        output.close()
 
+        with open(arguments.destination, 'w') as output:
+            output.write(str(data))
         self.stdout.write("Written %d bytes\n\n" % len(data))
 
     def get_completion_suggestions(self, action, text, **kwargs):
@@ -179,7 +178,7 @@ Finding content providers that do not require permissions to read/write:
         parser.add_argument("-v", "--verbose", action="store_true", default=False, help="be verbose")
 
     def execute(self, arguments):
-        if arguments.package == None:
+        if arguments.package is None:
             for package in self.packageManager().getPackages(common.PackageManager.GET_PROVIDERS | common.PackageManager.GET_URI_PERMISSION_PATTERNS):
                 self.__get_providers(arguments, package)
         else:
@@ -193,13 +192,13 @@ Finding content providers that do not require permissions to read/write:
 
     def __get_providers(self, arguments, package):
         providers = self.match_filter(package.providers, 'authority', arguments.filter)        
-        
+
         if arguments.permission != None:
             r_providers = self.match_filter(providers, 'readPermission', arguments.permission)
             w_providers = self.match_filter(providers, 'writePermission', arguments.permission)
 
             providers = set(r_providers + w_providers)
-            
+
         exported_providers = self.match_filter(providers, 'exported', True)
         hidden_providers = self.match_filter(providers, 'exported', False)
 

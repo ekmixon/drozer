@@ -54,15 +54,15 @@ class RepositoryBuilder(object):
         Searches the source folder, to identify source files and packages, and
         isolate them ready for building.
         """
-        
+
         for root, folders, files in os.walk(self.source):
             self.__skip_folders(folders)
-            
+
             if ".drozer_package" in files:
                 yield SourcePackage(self.source, root, files)
             else:
                 for f in files:
-                    if f.endswith(".py") and not f == "__init__.py":
+                    if f.endswith(".py") and f != "__init__.py":
                         yield SourceFile(self.source, os.sep.join([root, f]))
     
     def __skip_folders(self, folders):
@@ -119,14 +119,14 @@ class SourceFile(Source):
         Fetch the human-readable description of this module, by extracting the first
         multi-line comment.
         """
-        
+
         delim = "\"\"\""
         source = fs.read(self.path)
-        
+
         if delim in source:
             start_idx = source.index(delim) + len(delim)
             finish_idx = source.index(delim, start_idx)
-            
+
             return source[start_idx:finish_idx].strip()
         else:
             return ""
@@ -146,7 +146,7 @@ class SourceFile(Source):
         return "file"
     
     def __str__(self):
-        return "[+] %s is a source" % (self.name())
+        return f"[+] {self.name()} is a source"
 
 
 class SourcePackage(Source):

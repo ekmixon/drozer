@@ -53,7 +53,7 @@ class ReflectionResponseFactory:
 
         self.builder.id = message.id
         self.builder.reflection_response.session_id = message.reflection_request.session_id
-        
+
         return self
     
     def isError(self):

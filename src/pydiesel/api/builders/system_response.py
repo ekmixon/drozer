@@ -21,7 +21,7 @@ class SystemResponseFactory:
         d.manufacturer = device.manufacturer
         d.model = device.model
         d.software = device.software
-        
+
         return d
 
     def add_session(self, session):
@@ -113,12 +113,10 @@ class SystemResponseFactory:
         build from a collection.
         """
 
-        builder = SystemResponseFactory(Message.SystemResponse.SESSION_LIST)
-
         #for session in sessions:
         #    builder.add_session(session)
 
-        return builder
+        return SystemResponseFactory(Message.SystemResponse.SESSION_LIST)
 
     def setErrorMessage(self, message):
         """

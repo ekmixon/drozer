@@ -24,7 +24,7 @@ class Backup(Module, common.Filters, common.PackageManager):
         else:
             packages = self.packageManager().getPackages(common.PackageManager.GET_META_DATA | common.PackageManager.GET_ACTIVITIES)
 
-        for package in [p for p in packages if arguments.filter == None or p.packageName.upper().find(arguments.filter.upper()) >= 0]:
+        for package in [p for p in packages if arguments.filter is None or p.packageName.upper().find(arguments.filter.upper()) >= 0]:
             application = package.applicationInfo
 
             if (application.flags & Backup.FLAG_ALLOW_BACKUP) != 0:

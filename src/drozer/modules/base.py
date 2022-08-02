@@ -125,8 +125,8 @@ class Module(object):
         """
         Test if Context is available to this module.
         """
-        
-        return not self.getContext() == None
+
+        return self.getContext() is not None
 
     def klass(self, class_name):
         """
@@ -176,20 +176,19 @@ class Module(object):
 
         if "-h" in args or "--help" in args:
             return parser.print_help()
-        else:
-            arguments = parser.parse_args(args)
-            
-            if hasattr(self, 'execute'):
-                result = self.execute(arguments)
-            else:
-                self.stderr.write("drozer doesn't know how to do that.\n")
-                self.stderr.write("The %s module does not define an execute() method.\n\n" % self.fqmn())
-                
-                result = None
-                
-            self.clearObjectStore()
+        arguments = parser.parse_args(args)
 
-            return result
+        if hasattr(self, 'execute'):
+            result = self.execute(arguments)
+        else:
+            self.stderr.write("drozer doesn't know how to do that.\n")
+            self.stderr.write("The %s module does not define an execute() method.\n\n" % self.fqmn())
+
+            result = None
+
+        self.clearObjectStore()
+
+        return result
 
     def __parse_error(self, message):
         """
@@ -225,7 +224,7 @@ class Usage(object):
         Returns a string containing the module authors, joined with ", " if
         there is a list provided.
         """
-        
+
         if isinstance(self.module.author, str):
             return self.module.author
         else:
@@ -266,7 +265,7 @@ class Usage(object):
         Get usage information about the Module.
         """
 
-        return "run {} {}\n\n".format(self.module.fqmn(), " ".join(parser.format_usage().split(" ")[2:]))
+        return f'run {self.module.fqmn()} {" ".join(parser.format_usage().split(" ")[2:])}\n\n'
         
     def has_examples(self):
         """

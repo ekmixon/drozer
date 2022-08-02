@@ -11,11 +11,11 @@ def which(executable):
     Update: added support for Windows hosts
     """
     if platform.system() == 'Windows':
-        executable = executable + ".exe"
-    
+        executable = f"{executable}.exe"
+
     for path in os.getenv("PATH", "").split(os.pathsep):
         trial = os.path.join(path, executable)
-        
+
         if os.path.isfile(trial) and os.access(trial, os.X_OK):
             return trial
 

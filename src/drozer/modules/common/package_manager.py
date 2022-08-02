@@ -27,7 +27,7 @@ class PackageManager(object):
     class NoSuchPackageException(ReflectionException):
         
         def __str__(self):
-            return "could not find the package: %s" % self.message
+            return f"could not find the package: {self.message}"
 
     class PackageManagerProxy(object):
         """
@@ -142,7 +142,7 @@ class PackageManager(object):
         Get the Android PackageManager.
         """
 
-        if self.__package_manager_proxy == None:
+        if self.__package_manager_proxy is None:
             self.__package_manager_proxy = PackageManager.PackageManagerProxy(self)
 
         return self.__package_manager_proxy

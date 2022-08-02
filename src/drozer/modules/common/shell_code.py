@@ -18,7 +18,7 @@ class ShellCode(object):
         return "".join(map(lambda b: "\\x%0.2X" % b, self.__shell_code))
 
     def asRaw(self):
-        return "".join(map(lambda b: "%s" % chr(b), self.__shell_code))
+        return "".join(map(lambda b: f"{chr(b)}", self.__shell_code))
 
     def asUnicode(self):
         shell_code = len(self.__shell_code) % 2 == 0 and self.__shell_code or self.__shell_code + [0]
@@ -51,8 +51,8 @@ class ShellCode(object):
     
     def hexifyInt32(self, int32):
         byte = "%.4X" % int32
-        
-        return [int("0x" + byte[0:2], 16), int("0x" + byte[2:4], 16)]
+
+        return [int("0x" + byte[:2], 16), int(f"0x{byte[2:4]}", 16)]
     
     def hexifyNull(self):
         return 0x00

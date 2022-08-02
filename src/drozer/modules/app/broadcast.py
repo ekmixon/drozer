@@ -44,7 +44,7 @@ class Info(Module, common.Filters, common.IntentFilter, common.PackageManager):
         parser.add_argument("-v", "--verbose", action="store_true", default=False, help="be verbose")
 
     def execute(self, arguments):
-        if arguments.package == None:
+        if arguments.package is None:
             for package in self.packageManager().getPackages(common.PackageManager.GET_RECEIVERS | common.PackageManager.GET_PERMISSIONS):
                 self.__get_receivers(arguments, package)
         else:
@@ -188,10 +188,10 @@ class Sniff(Module, loader.ClassLoader):
         else:
             self.stdout.write("[-] No broadcast receiver registered. However, this will still receive intents from previously registered receivers.\n")
 
-        self.stdout.write("[*] Output is updated once a second. Press Control+C to exit.\n\n") 
-        while (True):
+        self.stdout.write("[*] Output is updated once a second. Press Control+C to exit.\n\n")
+        while True:
             output = broadcast.getOutput()
-            if (str(output) == ""):
+            if not str(output):
                 time.sleep(1)
             else:
                 self.stdout.write(str(output))
